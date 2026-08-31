@@ -13,6 +13,8 @@ import { SuppliersPage } from '@/features/suppliers/SuppliersPage';
 import { CustomersPage } from '@/features/customers/CustomersPage';
 import { PurchasesPage } from '@/features/purchases/PurchasesPage';
 import { KardexPage } from '@/features/inventory/KardexPage';
+import { SalesPage } from '@/features/sales/SalesPage';
+import { NewSalePage } from '@/features/sales/NewSalePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +38,20 @@ export function App() {
                 <Route path="proveedores" element={<SuppliersPage />} />
                 <Route path="clientes" element={<CustomersPage />} />
                 <Route path="inventario" element={<KardexPage />} />
+                <Route
+                  element={
+                    <ProtectedRoute roles={[UserRole.ADMIN, UserRole.VENDEDOR, UserRole.CONSULTA]} />
+                  }
+                >
+                  <Route path="ventas" element={<SalesPage />} />
+                </Route>
+                <Route
+                  element={
+                    <ProtectedRoute roles={[UserRole.ADMIN, UserRole.VENDEDOR]} />
+                  }
+                >
+                  <Route path="ventas/nueva" element={<NewSalePage />} />
+                </Route>
                 <Route
                   element={
                     <ProtectedRoute roles={[UserRole.ADMIN, UserRole.CONSULTA]} />
