@@ -78,3 +78,15 @@
     @apply text-small text-muted uppercase tracking-[0.04em] font-medium;
   }
 }
+
+/* Aparición de modal/dropdown: fade + translateY(4px) */
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -6,6 +6,10 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { UsersPage } from '@/features/users/UsersPage';
+import { CategoriesPage } from '@/features/categories/CategoriesPage';
+import { ProductsPage } from '@/features/products/ProductsPage';
+import { SuppliersPage } from '@/features/suppliers/SuppliersPage';
+import { CustomersPage } from '@/features/customers/CustomersPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +28,10 @@ export function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route index element={<DashboardPage />} />
+                <Route path="productos" element={<ProductsPage />} />
+                <Route path="categorias" element={<CategoriesPage />} />
+                <Route path="proveedores" element={<SuppliersPage />} />
+                <Route path="clientes" element={<CustomersPage />} />
                 <Route
                   element={<ProtectedRoute roles={[UserRole.ADMIN]} />}
                 >
