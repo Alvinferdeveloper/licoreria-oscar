@@ -46,6 +46,15 @@ export class UsersController {
     return this.users.findAll(page, limit);
   }
 
+  @Get('options')
+  @Roles(UserRole.ADMIN, UserRole.CONSULTA)
+  @ApiOperation({
+    summary: 'Lista mínima de usuarios activos para selects de filtros (reportes)',
+  })
+  options() {
+    return this.users.findOptions();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un usuario' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {

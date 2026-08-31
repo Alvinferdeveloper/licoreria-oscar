@@ -46,7 +46,12 @@ const NAV_ITEMS: NavItem[] = [
   },
   { to: '/inventario', label: 'Inventario', icon: ClipboardList },
   { to: '/ventas', label: 'Ventas', icon: Receipt },
-  { to: '/reportes', label: 'Reportes', icon: FileBarChart },
+  {
+    to: '/reportes',
+    label: 'Reportes',
+    icon: FileBarChart,
+    roles: [UserRole.ADMIN, UserRole.CONSULTA],
+  },
   {
     to: '/usuarios',
     label: 'Usuarios',

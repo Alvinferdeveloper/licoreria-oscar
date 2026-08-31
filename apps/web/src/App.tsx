@@ -15,6 +15,7 @@ import { PurchasesPage } from '@/features/purchases/PurchasesPage';
 import { KardexPage } from '@/features/inventory/KardexPage';
 import { SalesPage } from '@/features/sales/SalesPage';
 import { NewSalePage } from '@/features/sales/NewSalePage';
+import { ReportsPage } from '@/features/reports/ReportsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,6 +59,7 @@ export function App() {
                   }
                 >
                   <Route path="compras" element={<PurchasesPage />} />
+                  <Route path="reportes" element={<ReportsPage />} />
                 </Route>
                 <Route
                   element={<ProtectedRoute roles={[UserRole.ADMIN]} />}

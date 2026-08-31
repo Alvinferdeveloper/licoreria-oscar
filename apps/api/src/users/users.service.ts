@@ -39,6 +39,16 @@ export class UsersService {
     return { data: users, meta: { page, limit, total } };
   }
 
+  // Lista mínima para selects de filtros (reportes): id y nombre
+  async findOptions() {
+    const users = await this.prisma.user.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    return { data: users };
+  }
+
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
