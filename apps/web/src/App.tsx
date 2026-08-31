@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { UsersPage } from '@/features/users/UsersPage';
+import { RolesPage } from '@/features/roles/RolesPage';
 import { CategoriesPage } from '@/features/categories/CategoriesPage';
 import { ProductsPage } from '@/features/products/ProductsPage';
 import { SuppliersPage } from '@/features/suppliers/SuppliersPage';
@@ -36,6 +37,7 @@ export function App() {
                   element={<ProtectedRoute roles={[UserRole.ADMIN]} />}
                 >
                   <Route path="usuarios" element={<UsersPage />} />
+                  <Route path="roles" element={<RolesPage />} />
                 </Route>
               </Route>
             </Route>

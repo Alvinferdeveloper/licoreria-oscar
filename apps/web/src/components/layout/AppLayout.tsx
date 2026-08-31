@@ -6,6 +6,7 @@ import {
   Truck,
   Users,
   UsersRound,
+  ShieldCheck,
   ShoppingCart,
   Receipt,
   FileBarChart,
@@ -43,6 +44,12 @@ const NAV_ITEMS: NavItem[] = [
     to: '/usuarios',
     label: 'Usuarios',
     icon: UsersRound,
+    roles: [UserRole.ADMIN],
+  },
+  {
+    to: '/roles',
+    label: 'Roles',
+    icon: ShieldCheck,
     roles: [UserRole.ADMIN],
   },
   {

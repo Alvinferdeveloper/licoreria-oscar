@@ -1,15 +1,19 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
-import { AlertCircle, Plus, UserX, UserCheck } from 'lucide-react';
+import { AxiosError } from 'axios';
+import { Pencil, Plus, UserX, UserCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
+import { FieldError } from '@/components/FieldError';
+import { PaginationControls } from '@/components/PaginationControls';
 import { formatDate } from '@/lib/utils';
 
 interface Role {
@@ -26,22 +30,39 @@ interface UserRow {
   role: { id: string; name: string };
 }
 
-const createUserSchema = z.object({
+const createSchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
   email: z.string().email('Email inválido'),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
   roleId: z.string().uuid('Seleccione un rol'),
 });
-type CreateUserForm = z.infer<typeof createUserSchema>;
+
+// En edición la contraseña es opcional: vacía = no cambiar
+const editSchema = createSchema.extend({
+  password: z
+    .string()
+    .min(8, 'Mínimo 8 caracteres')
+    .optional()
+    .or(z.literal('')),
+});
+
+type UserForm = z.infer<typeof editSchema>;
 
 export function UsersPage() {
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const [editing, setEditing] = useState<UserRow | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const usersQuery = useQuery({
-    queryKey: ['users'],
+    queryKey: ['users', page],
     queryFn: () =>
-      api.get<{ data: UserRow[] }>('/users').then((r) => r.data.data),
+      api
+        .get<{ data: UserRow[]; meta: { page: number; limit: number; total: number } }>(
+          '/users',
+          { params: { page, limit: 20 } },
+        )
+        .then((r) => r.data),
   });
 
   const rolesQuery = useQuery({
@@ -52,12 +73,20 @@ export function UsersPage() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ['users'] });
 
-  const createUser = useMutation({
-    mutationFn: (data: CreateUserForm) => api.post('/users', data),
+  const save = useMutation({
+    mutationFn: (data: UserForm) => {
+      // No enviar password vacía en edición
+      const payload = {
+        ...data,
+        password: data.password || undefined,
+      };
+      return editing
+        ? api.patch(`/users/${editing.id}`, payload)
+        : api.post('/users', payload);
+    },
     onSuccess: () => {
       invalidate();
-      setShowForm(false);
-      reset();
+      closeForm();
     },
   });
 
@@ -74,118 +103,61 @@ export function UsersPage() {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreateUserForm>({ resolver: zodResolver(createUserSchema) });
+  } = useForm<UserForm>({
+    resolver: zodResolver(editing ? editSchema : createSchema),
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    reset({ name: '', email: '', password: '', roleId: '' });
+    setFormOpen(true);
+  };
+  const openEdit = (user: UserRow) => {
+    setEditing(user);
+    reset({
+      name: user.name,
+      email: user.email,
+      password: '',
+      roleId: user.role.id,
+    });
+    setFormOpen(true);
+  };
+  const closeForm = () => {
+    setFormOpen(false);
+    setEditing(null);
+    reset();
+  };
+
+  const serverError =
+    save.error instanceof AxiosError
+      ? (save.error.response?.data?.message as string)
+      : null;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-h1 font-semibold">Usuarios</h1>
-        <Button onClick={() => setShowForm((v) => !v)}>
+        <Button onClick={openCreate}>
           <Plus size={20} strokeWidth={1.5} aria-hidden />
           Nuevo usuario
         </Button>
       </div>
-
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <h2 className="text-h2 font-semibold">Crear usuario</h2>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={handleSubmit((data) => createUser.mutate(data))}
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2"
-              noValidate
-            >
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="name">Nombre</Label>
-                <Input id="name" error={!!errors.name} {...register('name')} />
-                {errors.name && (
-                  <FieldError message={errors.name.message} />
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  error={!!errors.email}
-                  {...register('email')}
-                />
-                {errors.email && (
-                  <FieldError message={errors.email.message} />
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  error={!!errors.password}
-                  {...register('password')}
-                />
-                {errors.password && (
-                  <FieldError message={errors.password.message} />
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="roleId">Rol</Label>
-                <select
-                  id="roleId"
-                  className="h-10 rounded-sm border border-border bg-surface-sunken px-3 text-body text-ink focus-visible:border-brand-copper"
-                  {...register('roleId')}
-                >
-                  <option value="">Seleccione…</option>
-                  {rolesQuery.data?.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.roleId && (
-                  <FieldError message={errors.roleId.message} />
-                )}
-              </div>
-              <div className="flex gap-3 sm:col-span-2">
-                <Button type="submit" disabled={createUser.isPending}>
-                  {createUser.isPending ? 'Guardando…' : 'Guardar'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowForm(false)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardContent className="p-0">
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
-                <th className="table-head-cell px-4 py-2.5 text-left">
-                  Nombre
-                </th>
+                <th className="table-head-cell px-4 py-2.5 text-left">Nombre</th>
                 <th className="table-head-cell px-4 py-2.5 text-left">Email</th>
                 <th className="table-head-cell px-4 py-2.5 text-left">Rol</th>
-                <th className="table-head-cell px-4 py-2.5 text-left">
-                  Estado
-                </th>
-                <th className="table-head-cell px-4 py-2.5 text-left">
-                  Creado
-                </th>
-                <th className="table-head-cell px-4 py-2.5 text-right">
-                  Acciones
-                </th>
+                <th className="table-head-cell px-4 py-2.5 text-left">Estado</th>
+                <th className="table-head-cell px-4 py-2.5 text-left">Creado</th>
+                <th className="table-head-cell px-4 py-2.5 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {usersQuery.data?.map((user) => (
+              {usersQuery.data?.data.map((user) => (
                 <tr
                   key={user.id}
                   className="border-b border-border transition-colors hover:bg-surface-sunken"
@@ -207,6 +179,14 @@ export function UsersPage() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => openEdit(user)}
+                      aria-label={`Editar ${user.name}`}
+                    >
+                      <Pencil size={16} strokeWidth={1.5} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => toggleActive.mutate(user)}
                       aria-label={
                         user.isActive ? 'Desactivar usuario' : 'Reactivar usuario'
@@ -221,7 +201,7 @@ export function UsersPage() {
                   </td>
                 </tr>
               ))}
-              {usersQuery.data?.length === 0 && (
+              {usersQuery.data?.data.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-muted">
                     No hay usuarios registrados.
@@ -230,18 +210,90 @@ export function UsersPage() {
               )}
             </tbody>
           </table>
+          {usersQuery.data?.meta && (
+            <PaginationControls
+              page={usersQuery.data.meta.page}
+              limit={usersQuery.data.meta.limit}
+              total={usersQuery.data.meta.total}
+              onPageChange={setPage}
+            />
+          )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return (
-    <p className="flex items-center gap-1 text-small text-status-danger">
-      <AlertCircle size={14} aria-hidden />
-      {message}
-    </p>
+      <Modal
+        open={formOpen}
+        onClose={closeForm}
+        title={editing ? `Editar ${editing.name}` : 'Nuevo usuario'}
+      >
+        <form
+          key={editing?.id ?? 'new'}
+          onSubmit={handleSubmit((data) => save.mutate(data))}
+          className="flex flex-col gap-4"
+          noValidate
+        >
+          {serverError && (
+            <p
+              role="alert"
+              className="rounded-sm bg-status-danger/10 px-3 py-2 text-small text-status-danger"
+            >
+              {serverError}
+            </p>
+          )}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="name">Nombre</Label>
+            <Input id="name" error={!!errors.name} {...register('name')} />
+            <FieldError message={errors.name?.message} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              error={!!errors.email}
+              {...register('email')}
+            />
+            <FieldError message={errors.email?.message} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="password">
+              Contraseña{editing && ' (vacía = no cambiar)'}
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              error={!!errors.password}
+              {...register('password')}
+            />
+            <FieldError message={errors.password?.message} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="roleId">Rol</Label>
+            <select
+              id="roleId"
+              className="h-10 rounded-sm border border-border bg-surface-sunken px-3 text-body text-ink focus-visible:border-brand-copper"
+              {...register('roleId')}
+            >
+              <option value="">Seleccione…</option>
+              {rolesQuery.data?.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
+                </option>
+              ))}
+            </select>
+            <FieldError message={errors.roleId?.message} />
+          </div>
+          <div className="flex gap-3">
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? 'Guardando…' : 'Guardar'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={closeForm}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
   );
 }
