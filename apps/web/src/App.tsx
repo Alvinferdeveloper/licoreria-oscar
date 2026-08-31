@@ -11,6 +11,8 @@ import { CategoriesPage } from '@/features/categories/CategoriesPage';
 import { ProductsPage } from '@/features/products/ProductsPage';
 import { SuppliersPage } from '@/features/suppliers/SuppliersPage';
 import { CustomersPage } from '@/features/customers/CustomersPage';
+import { PurchasesPage } from '@/features/purchases/PurchasesPage';
+import { KardexPage } from '@/features/inventory/KardexPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +35,14 @@ export function App() {
                 <Route path="categorias" element={<CategoriesPage />} />
                 <Route path="proveedores" element={<SuppliersPage />} />
                 <Route path="clientes" element={<CustomersPage />} />
+                <Route path="inventario" element={<KardexPage />} />
+                <Route
+                  element={
+                    <ProtectedRoute roles={[UserRole.ADMIN, UserRole.CONSULTA]} />
+                  }
+                >
+                  <Route path="compras" element={<PurchasesPage />} />
+                </Route>
                 <Route
                   element={<ProtectedRoute roles={[UserRole.ADMIN]} />}
                 >

@@ -8,6 +8,7 @@ import {
   UsersRound,
   ShieldCheck,
   ShoppingCart,
+  ClipboardList,
   Receipt,
   FileBarChart,
   DatabaseBackup,
@@ -37,7 +38,13 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/categorias', label: 'Categorías', icon: Tags },
   { to: '/proveedores', label: 'Proveedores', icon: Truck },
   { to: '/clientes', label: 'Clientes', icon: Users },
-  { to: '/compras', label: 'Compras', icon: ShoppingCart },
+  {
+    to: '/compras',
+    label: 'Compras',
+    icon: ShoppingCart,
+    roles: [UserRole.ADMIN, UserRole.CONSULTA],
+  },
+  { to: '/inventario', label: 'Inventario', icon: ClipboardList },
   { to: '/ventas', label: 'Ventas', icon: Receipt },
   { to: '/reportes', label: 'Reportes', icon: FileBarChart },
   {

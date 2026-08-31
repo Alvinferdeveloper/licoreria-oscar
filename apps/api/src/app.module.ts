@@ -11,6 +11,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { CustomersModule } from './customers/customers.module';
+import { PurchasesModule } from './purchases/purchases.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { CustomersModule } from './customers/customers.module';
     ProductsModule,
     SuppliersModule,
     CustomersModule,
+    PurchasesModule,
+    InventoryModule,
+    AuditModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
