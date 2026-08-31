@@ -1,0 +1,24 @@
+{
+  "name": "licoreria-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sistema de Control de Inventario y Facturación de Licorería",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace apps/api",
+    "dev:web": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build --workspace packages/shared-types",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run prisma:migrate --workspace apps/api",
+    "db:seed": "npm run prisma:seed --workspace apps/api",
+    "db:studio": "npm run prisma:studio --workspace apps/api"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

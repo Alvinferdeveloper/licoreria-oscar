@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+**/dist
+.git
+*.log
+.env
+backups/
+agent.md
+design.md

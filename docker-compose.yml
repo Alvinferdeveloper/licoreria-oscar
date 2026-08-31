@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: licoreria-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-licoreria}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-licoreria_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-licoreria_db}
+      TZ: UTC
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-licoreria} -d $${POSTGRES_DB:-licoreria_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # NOTA: api y web se definen desde el inicio como buena práctica,
+  # pero durante el desarrollo se corren local con `npm run dev:api` / `npm run dev:web`.
+  # El stack completo en Docker se valida en Fase 8.
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: licoreria-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-licoreria}:${POSTGRES_PASSWORD:-licoreria_dev}@postgres:5432/${POSTGRES_DB:-licoreria_db}
+      TZ: UTC
+    ports:
+      - "3000:3000"
+    profiles: ["full"]
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: licoreria-web
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+    profiles: ["full"]
+
+volumes:
+  postgres_data:

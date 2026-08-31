@@ -1,0 +1,34 @@
+# Documentos de referencia local / bitácora
+agent.md
+design.md
+PROGRESS.md
+bitacora.md
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Dependencias
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Prisma
+apps/api/prisma/*.db
+
+# Backups locales generados por la app
+backups/
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
