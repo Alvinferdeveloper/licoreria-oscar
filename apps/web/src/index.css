@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Tokens del sistema de diseño (color, superficie, texto) ─── */
+:root {
+  /* Marca (núcleo, no cambian entre modos salvo copper-on-dark) */
+  --brand-copper: #a6632b;
+  --brand-copper-strong: #7c4a1e;
+  --brand-amber: #c98a32;
+  --brand-cava: #1f3d33;
+  --brand-cava-soft: #2e5347;
+
+  /* Neutrales — modo claro */
+  --surface-base: #edeeea;
+  --surface-card: #f8f5ee;
+  --surface-sunken: #e2e3dd;
+  --border-hairline: #d8d6cc;
+  --text-ink: #241c15;
+  --text-muted: #5a5248;
+
+  /* Semánticos — modo claro */
+  --status-success: #2f7d5a;
+  --status-danger: #b23a34;
+  --status-warning: #c08a1e;
+  --status-info: #3b6e91;
+}
+
+.dark {
+  --brand-copper: #c17a3d; /* cobre aclarado para contraste AA sobre oscuro */
+  --brand-copper-strong: #a6632b;
+
+  --surface-base: #17140f;
+  --surface-card: #201a13;
+  --surface-sunken: #0f0d09;
+  --border-hairline: rgba(201, 138, 50, 0.16);
+  --text-ink: #ede7d8;
+  --text-muted: #a79e8c;
+
+  --status-success: #4c9b78;
+  --status-danger: #d6564f;
+  --status-warning: #d9a23b;
+  --status-info: #5b93b8;
+}
+
+@layer base {
+  body {
+    @apply bg-surface-base text-ink font-sans text-body antialiased;
+  }
+
+  /* Foco visible siempre */
+  *:focus-visible {
+    outline: 2px solid var(--brand-copper);
+    outline-offset: 2px;
+  }
+
+  /* Respeta prefers-reduced-motion: desactiva transiciones no esenciales */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Elemento de firma: Línea de Vertido — solo dashboard y factura */
+  .pour-line {
+    height: 2px;
+    width: 96px;
+    background: linear-gradient(90deg, var(--brand-copper) 0%, transparent 100%);
+  }
+
+  /* Encabezado de tabla — único lugar del sistema con uppercase */
+  .table-head-cell {
+    @apply text-small text-muted uppercase tracking-[0.04em] font-medium;
+  }
+}
