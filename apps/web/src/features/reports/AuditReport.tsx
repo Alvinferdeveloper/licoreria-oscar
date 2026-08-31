@@ -113,7 +113,7 @@ export function AuditReport() {
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="table-scroll p-0">
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">

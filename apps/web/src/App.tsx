@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UserRole } from '@licoreria/shared-types';
 import { ProtectedRoute, ThemeApplier } from '@/components/ProtectedRoute';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Toaster } from '@/components/Toaster';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
@@ -15,8 +17,10 @@ import { PurchasesPage } from '@/features/purchases/PurchasesPage';
 import { KardexPage } from '@/features/inventory/KardexPage';
 import { SalesPage } from '@/features/sales/SalesPage';
 import { NewSalePage } from '@/features/sales/NewSalePage';
+import { AuditPage } from '@/features/audit/AuditPage';
 import { ReportsPage } from '@/features/reports/ReportsPage';
 import { BackupsPage } from '@/features/backups/BackupsPage';
+import { NotFoundPage } from '@/features/NotFoundPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,9 +30,11 @@ const queryClient = new QueryClient({
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeApplier>
-        <BrowserRouter>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeApplier>
+          <BrowserRouter>
+            <Toaster />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
@@ -63,17 +69,22 @@ export function App() {
                   <Route path="reportes" element={<ReportsPage />} />
                 </Route>
                 <Route
-                  element={<ProtectedRoute roles={[UserRole.ADMIN]} />}
+                  element={
+                    <ProtectedRoute roles={[UserRole.ADMIN]} />
+                  }
                 >
+                  <Route path="auditoria" element={<AuditPage />} />
                   <Route path="usuarios" element={<UsersPage />} />
                   <Route path="roles" element={<RolesPage />} />
                   <Route path="backups" element={<BackupsPage />} />
                 </Route>
+                <Route path="*" element={<NotFoundPage />} />
               </Route>
             </Route>
           </Routes>
         </BrowserRouter>
       </ThemeApplier>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

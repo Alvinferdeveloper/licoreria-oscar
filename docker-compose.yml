@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     container_name: licoreria-postgres
     restart: unless-stopped
     environment:
@@ -18,9 +18,9 @@ services:
       timeout: 5s
       retries: 10
 
-  # NOTA: api y web se definen desde el inicio como buena práctica,
-  # pero durante el desarrollo se corren local con `npm run dev:api` / `npm run dev:web`.
-  # El stack completo en Docker se valida en Fase 8.
+  # api y web solo se levantan con el perfil "full":
+  #   docker compose --profile full up -d --build
+  # Durante el desarrollo se corren local con `npm run dev:api` / `npm run dev:web`.
   api:
     build:
       context: .
@@ -31,7 +31,15 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-licoreria}:${POSTGRES_PASSWORD:-licoreria_dev}@postgres:5432/${POSTGRES_DB:-licoreria_db}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-docker-dev-access-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-docker-dev-refresh-secret}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      BACKUP_DIR: /app/backups
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@licoreria.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin123*}
       TZ: UTC
+    volumes:
+      - backups_data:/app/backups
     ports:
       - "3000:3000"
     profiles: ["full"]
@@ -49,3 +57,4 @@ services:
 
 volumes:
   postgres_data:
+  backups_data:

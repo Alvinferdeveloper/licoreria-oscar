@@ -77,6 +77,15 @@
   .table-head-cell {
     @apply text-small text-muted uppercase tracking-[0.04em] font-medium;
   }
+
+  /* Tablas densas: scroll horizontal propio en pantallas angostas,
+     sin forzar scroll al layout general */
+  .table-scroll {
+    @apply overflow-x-auto;
+  }
+  .table-scroll > table {
+    @apply min-w-[640px];
+  }
 }
 
 /* Aparición de modal/dropdown: fade + translateY(4px) */

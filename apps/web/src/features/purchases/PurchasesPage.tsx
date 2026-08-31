@@ -260,7 +260,7 @@ export function PurchasesPage() {
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="table-scroll p-0">
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
@@ -479,7 +479,8 @@ export function PurchasesPage() {
               <span className="text-muted">Registrada por</span>
               <span>{detail.user.name}</span>
             </div>
-            <table className="w-full text-body">
+            <div className="table-scroll">
+              <table className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
                   <th className="table-head-cell py-2 text-left">Producto</th>
@@ -503,6 +504,7 @@ export function PurchasesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
             <div className="flex justify-end font-mono text-h2 font-semibold">
               {formatCurrency(Number(detail.total))}
             </div>
@@ -522,7 +524,8 @@ export function PurchasesPage() {
               Con el nuevo costo promedio, estos son los precios sugeridos según
               el margen de cada producto. No se aplican automáticamente.
             </p>
-            <table className="w-full text-body">
+            <div className="table-scroll">
+              <table className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
                   <th className="table-head-cell py-2 text-left">Producto</th>
@@ -561,6 +564,7 @@ export function PurchasesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
             <Button variant="secondary" onClick={() => setSuggested(null)}>
               Cerrar
             </Button>

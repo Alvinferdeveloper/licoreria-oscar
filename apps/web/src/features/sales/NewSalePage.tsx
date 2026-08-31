@@ -196,7 +196,8 @@ export function NewSalePage() {
             </div>
           </div>
 
-          <table className="w-full text-body">
+          <div className="table-scroll">
+            <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
                 <th className="table-head-cell py-2 text-left">Producto</th>
@@ -261,6 +262,7 @@ export function NewSalePage() {
               )}
             </tbody>
           </table>
+          </div>
 
           <div className="flex flex-col items-end gap-1 border-t border-border pt-3">
             <span className="font-mono text-small text-muted">

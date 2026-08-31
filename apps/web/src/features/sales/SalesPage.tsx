@@ -189,7 +189,7 @@ export function SalesPage() {
       </div>
 
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="table-scroll p-0">
           <table className="w-full text-body">
             <thead>
               <tr className="border-b border-border">
@@ -299,7 +299,8 @@ export function SalesPage() {
                 {detail.status === SaleStatus.ISSUED ? 'Emitida' : 'Anulada'}
               </Badge>
             </div>
-            <table className="w-full text-body">
+            <div className="table-scroll">
+              <table className="w-full text-body">
               <thead>
                 <tr className="border-b border-border">
                   <th className="table-head-cell py-2 text-left">Producto</th>
@@ -323,6 +324,7 @@ export function SalesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
             <div className="flex flex-col items-end gap-1 border-t border-border pt-3">
               <span className="font-mono text-small text-muted">
                 Subtotal: {formatCurrency(detail.subtotal)}

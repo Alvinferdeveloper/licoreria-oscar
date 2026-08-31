@@ -14,6 +14,8 @@
     "build:shared": "npm run build --workspace packages/shared-types",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
+    "stack:up": "docker compose --profile full up -d --build",
+    "stack:down": "docker compose --profile full down",
     "db:migrate": "npm run prisma:migrate --workspace apps/api",
     "db:seed": "npm run prisma:seed --workspace apps/api",
     "db:studio": "npm run prisma:studio --workspace apps/api"
