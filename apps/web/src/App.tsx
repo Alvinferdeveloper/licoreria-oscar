@@ -16,6 +16,7 @@ import { KardexPage } from '@/features/inventory/KardexPage';
 import { SalesPage } from '@/features/sales/SalesPage';
 import { NewSalePage } from '@/features/sales/NewSalePage';
 import { ReportsPage } from '@/features/reports/ReportsPage';
+import { BackupsPage } from '@/features/backups/BackupsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ export function App() {
                 >
                   <Route path="usuarios" element={<UsersPage />} />
                   <Route path="roles" element={<RolesPage />} />
+                  <Route path="backups" element={<BackupsPage />} />
                 </Route>
               </Route>
             </Route>
