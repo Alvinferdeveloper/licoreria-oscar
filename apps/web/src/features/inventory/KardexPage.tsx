@@ -5,6 +5,7 @@ import { SlidersHorizontal, AlertTriangle } from 'lucide-react';
 import { MovementType, UserRole } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
+import { toast } from '@/stores/toast.store';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,11 +84,15 @@ export function KardexPage() {
     mutationFn: (payload: { productId: string; quantity: number; reason: string }) =>
       api.post('/inventory/adjustments', payload),
     onSuccess: () => {
+      toast('Ajuste aplicado correctamente', 'success');
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setAdjustOpen(false);
       setQuantity('0');
       setReason('');
+    },
+    onError: () => {
+      toast('Error al aplicar el ajuste', 'danger');
     },
   });
 
@@ -103,12 +108,12 @@ export function KardexPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-h1 font-semibold">Inventario</h1>
-        {isAdmin && productId && (
-          <Button onClick={() => setAdjustOpen(true)}>
-            <SlidersHorizontal size={20} strokeWidth={1.5} aria-hidden />
-            Ajuste manual
-          </Button>
-        )}
+{isAdmin && productId && (
+            <Button onClick={() => setAdjustOpen(true)}>
+              <SlidersHorizontal size={20} strokeWidth={1.5} aria-hidden />
+              Ajuste manual
+            </Button>
+          )}
       </div>
 
       {/* Alertas de stock bajo */}

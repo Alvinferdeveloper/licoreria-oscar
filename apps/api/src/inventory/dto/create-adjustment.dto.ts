@@ -12,12 +12,12 @@ export class CreateAdjustmentDto {
     description: 'Positivo = entrada por ajuste, negativo = salida por ajuste',
   })
   @Type(() => Number)
-  @IsInt()
-  @IsNotEmpty()
+  @IsInt({ message: 'La cantidad debe ser un número entero' })
+  @IsNotEmpty({ message: 'La cantidad es obligatoria' })
   quantity: number;
 
   @ApiProperty({ example: 'Producto dañado en bodega' })
-  @IsString()
-  @MaxLength(255)
+  @IsString({ message: 'El motivo es obligatorio' })
+  @MaxLength(255, { message: 'El motivo no puede superar los 255 caracteres' })
   reason: string;
 }

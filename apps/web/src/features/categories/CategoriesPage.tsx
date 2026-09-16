@@ -8,6 +8,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { UserRole } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
+import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface Category {
   id: string;
@@ -36,6 +38,8 @@ export function CategoriesPage() {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Category | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const categoriesQuery = useQuery({
     queryKey: ['categories', page],
@@ -57,14 +61,26 @@ export function CategoriesPage() {
         ? api.patch(`/categories/${editing.id}`, data)
         : api.post('/categories', data),
     onSuccess: () => {
+      toast('Categoría guardada correctamente', 'success');
       invalidate();
       closeForm();
+    },
+    onError: () => {
+      toast('Error al guardar la categoría', 'danger');
     },
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/categories/${id}`),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      toast('Categoría eliminada', 'success');
+      invalidate();
+      setDeleteConfirmId(null);
+      setDeleteConfirmText('');
+    },
+    onError: () => {
+      toast('Error al eliminar la categoría', 'danger');
+    },
   });
 
   const {
@@ -152,7 +168,10 @@ export function CategoriesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => remove.mutate(category.id)}
+                        onClick={() => {
+                          setDeleteConfirmId(category.id);
+                          setDeleteConfirmText('');
+                        }}
                         disabled={category._count.products > 0}
                         aria-label={`Eliminar ${category.name}`}
                       >
@@ -227,6 +246,25 @@ export function CategoriesPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleteConfirmId}
+        onClose={() => {
+          setDeleteConfirmId(null);
+          setDeleteConfirmText('');
+        }}
+        onConfirm={() => {
+          if (deleteConfirmId) {
+            remove.mutate(deleteConfirmId);
+          }
+        }}
+        isPending={remove.isPending}
+        title="Eliminar categoría"
+        message="¿Está seguro de eliminar esta categoría? Esta acción no se puede deshacer."
+        confirmWord="ELIMINAR"
+        confirmText={deleteConfirmText}
+        setConfirmText={setDeleteConfirmText}
+      />
     </div>
   );
 }

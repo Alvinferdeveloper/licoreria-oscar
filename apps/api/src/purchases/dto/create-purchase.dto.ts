@@ -17,14 +17,14 @@ export class PurchaseDetailDto {
 
   @ApiProperty({ example: 12, minimum: 1 })
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'La cantidad debe ser un número entero' })
+  @Min(1, { message: 'La cantidad debe ser al menos 1' })
   quantity: number;
 
   @ApiProperty({ example: 210.5, description: 'Costo unitario de compra' })
   @Type(() => Number)
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El costo debe ser un número válido' })
+  @Min(0, { message: 'El costo no puede ser negativo' })
   unitCost: number;
 }
 
@@ -34,8 +34,8 @@ export class CreatePurchaseDto {
   supplierId: string;
 
   @ApiProperty({ type: [PurchaseDetailDto], minItems: 1 })
-  @IsArray()
-  @ArrayMinSize(1)
+  @IsArray({ message: 'Debe ingresar al menos un producto' })
+  @ArrayMinSize(1, { message: 'Debe ingresar al menos un producto' })
   @ValidateNested({ each: true })
   @Type(() => PurchaseDetailDto)
   details: PurchaseDetailDto[];

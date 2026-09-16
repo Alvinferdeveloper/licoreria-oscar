@@ -8,6 +8,7 @@ import { Pencil, Plus, Search, UserX, UserCheck } from 'lucide-react';
 import { UserRole } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
+import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface Customer {
   id: string;
@@ -46,6 +48,8 @@ export function CustomersPage() {
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Customer | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [toggleConfirmId, setToggleConfirmId] = useState<string | null>(null);
+  const [toggleAction, setToggleAction] = useState<'deactivate' | 'reactivate'>('deactivate');
 
   const customersQuery = useQuery({
     queryKey: ['customers', page, search],
@@ -67,8 +71,12 @@ export function CustomersPage() {
         ? api.patch(`/customers/${editing.id}`, data)
         : api.post('/customers', data),
     onSuccess: () => {
+      toast('Cliente guardado correctamente', 'success');
       invalidate();
       closeForm();
+    },
+    onError: () => {
+      toast('Error al guardar el cliente', 'danger');
     },
   });
 
@@ -77,7 +85,14 @@ export function CustomersPage() {
       customer.isActive
         ? api.delete(`/customers/${customer.id}`)
         : api.patch(`/customers/${customer.id}`, { isActive: true }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      toast('Estado actualizado', 'success');
+      invalidate();
+      setToggleConfirmId(null);
+    },
+    onError: () => {
+      toast('Error al cambiar el estado', 'danger');
+    },
   });
 
   const {
@@ -191,7 +206,14 @@ export function CustomersPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleActive.mutate(customer)}
+                        onClick={() => {
+                          if (customer.isActive) {
+                            setToggleAction('deactivate');
+                          } else {
+                            setToggleAction('reactivate');
+                          }
+                          setToggleConfirmId(customer.id);
+                        }}
                         aria-label={
                           customer.isActive
                             ? `Desactivar ${customer.name}`
@@ -283,6 +305,24 @@ export function CustomersPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!toggleConfirmId}
+        onClose={() => setToggleConfirmId(null)}
+        onConfirm={() => {
+          const customer = customersQuery.data?.data.find((c) => c.id === toggleConfirmId);
+          if (customer) toggleActive.mutate(customer);
+        }}
+        isPending={toggleActive.isPending}
+        title={toggleAction === 'deactivate' ? 'Desactivar cliente' : 'Reactivar cliente'}
+        message={
+          toggleAction === 'deactivate'
+            ? `¿Está seguro de desactivar este cliente?`
+            : `¿Está seguro de reactivar este cliente?`
+        }
+        confirmText=""
+        setConfirmText={() => {}}
+      />
     </div>
   );
 }

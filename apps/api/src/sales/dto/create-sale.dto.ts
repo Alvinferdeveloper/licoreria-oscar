@@ -16,8 +16,8 @@ export class SaleDetailDto {
 
   @ApiProperty({ example: 2, minimum: 1 })
   @Type(() => Number)
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'La cantidad debe ser un número entero' })
+  @Min(1, { message: 'La cantidad debe ser al menos 1' })
   quantity: number;
 }
 
@@ -27,8 +27,8 @@ export class CreateSaleDto {
   customerId: string;
 
   @ApiProperty({ type: [SaleDetailDto], minItems: 1 })
-  @IsArray()
-  @ArrayMinSize(1)
+  @IsArray({ message: 'Debe ingresar al menos un producto' })
+  @ArrayMinSize(1, { message: 'Debe ingresar al menos un producto' })
   @ValidateNested({ each: true })
   @Type(() => SaleDetailDto)
   details: SaleDetailDto[];

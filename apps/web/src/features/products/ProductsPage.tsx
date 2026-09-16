@@ -8,6 +8,7 @@ import { Pencil, Plus, Search, Wine, UserX, UserCheck, ImagePlus } from 'lucide-
 import { UserRole } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
+import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { formatCurrency } from '@/lib/utils';
 
 interface Product {
@@ -60,7 +62,6 @@ function stockBadge(product: Product) {
   return <Badge variant="success">Normal</Badge>;
 }
 
-// Placeholder genérico cuando el producto no tiene imagen (siempre opcional)
 function ProductImage({ product }: { product: Product }) {
   if (!product.imageUrl) {
     return (
@@ -91,6 +92,8 @@ export function ProductsPage() {
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [toggleConfirmId, setToggleConfirmId] = useState<string | null>(null);
+  const [toggleAction, setToggleAction] = useState<'deactivate' | 'reactivate'>('deactivate');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const productsQuery = useQuery({
@@ -130,8 +133,12 @@ export function ProductsPage() {
         ? api.patch(`/products/${editing.id}`, data)
         : api.post('/products', data),
     onSuccess: () => {
+      toast(editing ? 'Producto actualizado' : 'Producto guardado', 'success');
       invalidate();
       closeForm();
+    },
+    onError: () => {
+      toast('Error al guardar el producto', 'danger');
     },
   });
 
@@ -140,10 +147,16 @@ export function ProductsPage() {
       product.isActive
         ? api.delete(`/products/${product.id}`)
         : api.patch(`/products/${product.id}`, { isActive: true }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      toast('Estado actualizado', 'success');
+      invalidate();
+      setToggleConfirmId(null);
+    },
+    onError: () => {
+      toast('Error al cambiar el estado', 'danger');
+    },
   });
 
-  // Subida directa al bucket con signed URL; el binario no pasa por el API
   const uploadImage = useMutation({
     mutationFn: async ({ product, file }: { product: Product; file: File }) => {
       const { data } = await api.post<{
@@ -318,7 +331,14 @@ export function ProductsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleActive.mutate(product)}
+                        onClick={() => {
+                          if (product.isActive) {
+                            setToggleAction('deactivate');
+                          } else {
+                            setToggleAction('reactivate');
+                          }
+                          setToggleConfirmId(product.id);
+                        }}
                         aria-label={
                           product.isActive
                             ? `Desactivar ${product.name}`
@@ -489,6 +509,26 @@ export function ProductsPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!toggleConfirmId}
+        onClose={() => setToggleConfirmId(null)}
+        onConfirm={() => {
+          const product = productsQuery.data?.data.find((p) => p.id === toggleConfirmId);
+          if (product) {
+            toggleActive.mutate(product);
+          }
+        }}
+        isPending={toggleActive.isPending}
+        title={toggleAction === 'deactivate' ? 'Desactivar producto' : 'Reactivar producto'}
+        message={
+          toggleAction === 'deactivate'
+            ? `¿Está seguro de desactivar este producto? Se ocultará de la lista pero no se eliminará.`
+            : `¿Está seguro de reactivar este producto?`
+        }
+        confirmText=""
+        setConfirmText={() => {}}
+      />
     </div>
   );
 }

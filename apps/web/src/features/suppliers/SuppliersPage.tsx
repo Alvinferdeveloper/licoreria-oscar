@@ -8,6 +8,7 @@ import { Pencil, Plus, UserX, UserCheck } from 'lucide-react';
 import { UserRole } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
+import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface Supplier {
   id: string;
@@ -43,6 +45,8 @@ export function SuppliersPage() {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [toggleConfirmId, setToggleConfirmId] = useState<string | null>(null);
+  const [toggleAction, setToggleAction] = useState<'deactivate' | 'reactivate'>('deactivate');
 
   const suppliersQuery = useQuery({
     queryKey: ['suppliers', page],
@@ -64,8 +68,12 @@ export function SuppliersPage() {
         ? api.patch(`/suppliers/${editing.id}`, data)
         : api.post('/suppliers', data),
     onSuccess: () => {
+      toast('Proveedor guardado correctamente', 'success');
       invalidate();
       closeForm();
+    },
+    onError: () => {
+      toast('Error al guardar el proveedor', 'danger');
     },
   });
 
@@ -74,7 +82,14 @@ export function SuppliersPage() {
       supplier.isActive
         ? api.delete(`/suppliers/${supplier.id}`)
         : api.patch(`/suppliers/${supplier.id}`, { isActive: true }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      toast('Estado actualizado', 'success');
+      invalidate();
+      setToggleConfirmId(null);
+    },
+    onError: () => {
+      toast('Error al cambiar el estado', 'danger');
+    },
   });
 
   const {
@@ -170,7 +185,14 @@ export function SuppliersPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleActive.mutate(supplier)}
+                        onClick={() => {
+                          if (supplier.isActive) {
+                            setToggleAction('deactivate');
+                          } else {
+                            setToggleAction('reactivate');
+                          }
+                          setToggleConfirmId(supplier.id);
+                        }}
                         aria-label={
                           supplier.isActive
                             ? `Desactivar ${supplier.name}`
@@ -262,6 +284,24 @@ export function SuppliersPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!toggleConfirmId}
+        onClose={() => setToggleConfirmId(null)}
+        onConfirm={() => {
+          const supplier = suppliersQuery.data?.data.find((s) => s.id === toggleConfirmId);
+          if (supplier) toggleActive.mutate(supplier);
+        }}
+        isPending={toggleActive.isPending}
+        title={toggleAction === 'deactivate' ? 'Desactivar proveedor' : 'Reactivar proveedor'}
+        message={
+          toggleAction === 'deactivate'
+            ? `¿Está seguro de desactivar este proveedor?`
+            : `¿Está seguro de reactivar este proveedor?`
+        }
+        confirmText=""
+        setConfirmText={() => {}}
+      />
     </div>
   );
 }

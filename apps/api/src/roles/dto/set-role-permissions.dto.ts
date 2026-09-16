@@ -6,8 +6,8 @@ export class SetRolePermissionsDto {
     description: 'Set completo de IDs de permisos del rol (reemplaza el anterior)',
     type: [String],
   })
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsUUID('4', { each: true })
+  @IsArray({ message: 'Debe proporcionar una lista de permisos' })
+  @ArrayNotEmpty({ message: 'Debe asignar al menos un permiso' })
+  @IsUUID('4')
   permissionIds: string[];
 }

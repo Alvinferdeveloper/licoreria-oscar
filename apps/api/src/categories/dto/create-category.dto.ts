@@ -3,13 +3,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
   @ApiProperty({ example: 'Whisky' })
-  @IsString()
-  @MaxLength(80)
+  @IsString({ message: 'El nombre es obligatorio' })
+  @MaxLength(80, { message: 'El nombre no puede superar los 80 caracteres' })
   name: string;
 
   @ApiPropertyOptional({ example: 'Whiskies escoceses, irlandeses y americanos' })
   @IsOptional()
-  @IsString()
-  @MaxLength(255)
+  @IsString({ message: 'La descripción debe ser texto' })
+  @MaxLength(255, { message: 'La descripción no puede superar los 255 caracteres' })
   description?: string;
 }
