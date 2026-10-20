@@ -8,6 +8,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface Customer {
@@ -151,7 +152,7 @@ export function NewSalePage() {
         <CardContent className="flex flex-col gap-6 p-6">
           <div className="flex flex-col gap-2">
             <Label htmlFor="saleCustomer">Cliente</Label>
-            <select
+            <Select
               id="saleCustomer"
               value={customerId}
               onChange={(e) => setCustomerId(e.target.value)}
@@ -164,13 +165,13 @@ export function NewSalePage() {
                   {c.documentId ? ` — ${c.documentId}` : ''}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="saleProduct">Agregar producto</Label>
             <div className="flex gap-2">
-              <select
+              <Select
                 id="saleProduct"
                 value={selectedProduct}
                 onChange={(e) => setSelectedProduct(e.target.value)}
@@ -183,7 +184,7 @@ export function NewSalePage() {
                     {p.currentStock}
                   </option>
                 ))}
-              </select>
+              </Select>
               <Button
                 type="button"
                 variant="secondary"

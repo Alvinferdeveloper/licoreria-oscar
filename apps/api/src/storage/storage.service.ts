@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -10,6 +10,7 @@ const SIGNED_READ_URL_TTL_SECONDS = 60 * 60; // 1 hora
 // los endpoints de producto funcionan igual con imageUrl = null.
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private client: SupabaseClient | null = null;
   private bucket: string;
 
@@ -32,7 +33,12 @@ export class StorageService {
     const { data, error } = await client.storage
       .from(this.bucket)
       .createSignedUploadUrl(imageKey);
-    if (error) throw new ServiceUnavailableException(error.message);
+    if (error) {
+      this.logger.error(`Supabase createSignedUploadUrl: ${error.message}`);
+      throw new ServiceUnavailableException(
+        'No se pudo preparar la subida de la imagen. Intente de nuevo.',
+      );
+    }
     return data;
   }
 
@@ -41,7 +47,10 @@ export class StorageService {
     const { data, error } = await this.client.storage
       .from(this.bucket)
       .createSignedUrl(imageKey, SIGNED_READ_URL_TTL_SECONDS);
-    if (error) return null;
+    if (error) {
+      this.logger.warn(`Supabase createSignedUrl: ${error.message}`);
+      return null;
+    }
     return data.signedUrl;
   }
 

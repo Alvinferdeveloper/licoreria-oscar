@@ -7,8 +7,10 @@ import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { defaultRange, downloadExcel } from './reports-utils';
 
 interface Option {
@@ -115,7 +117,7 @@ export function SalesReport() {
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="srUser">Vendedor</Label>
-          <select
+          <Select
             id="srUser"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
@@ -127,11 +129,11 @@ export function SalesReport() {
                 {u.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="srCategory">Categoría</Label>
-          <select
+          <Select
             id="srCategory"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
@@ -143,7 +145,7 @@ export function SalesReport() {
                 {c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <Button
           variant="secondary"
@@ -282,13 +284,13 @@ export function SalesReport() {
                   )}
                 </Fragment>
               ))}
-              {reportQuery.data?.sales.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
-                    No hay ventas en el rango seleccionado.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={7}
+                isLoading={reportQuery.isPending && !!startDate && !!endDate}
+                isError={reportQuery.isError}
+                isEmpty={reportQuery.data?.sales.length === 0}
+                emptyMessage="No hay ventas en el rango seleccionado."
+              />
             </tbody>
           </table>
         </CardContent>

@@ -1,11 +1,22 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { FileDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PaginationControls } from '@/components/PaginationControls';
+import { TableState } from '@/components/TableState';
+import { downloadExcel } from '@/features/reports/reports-utils';
+import {
+  AUDIT_ACTION_LABELS,
+  auditActionLabel,
+  auditEntityLabel,
+  formatAuditMetadata,
+} from './audit-labels';
 
 interface AuditLog {
   id: string;
@@ -62,7 +73,7 @@ export function AuditContent({ showTitle = true }: AuditContentProps) {
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="auUser">Usuario</Label>
-          <select
+          <Select
             id="auUser"
             value={userId}
             onChange={(e) => {
@@ -77,19 +88,25 @@ export function AuditContent({ showTitle = true }: AuditContentProps) {
                 {u.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="auAction">Acción</Label>
-          <Input
+          <Select
             id="auAction"
             value={action}
             onChange={(e) => {
               setAction(e.target.value);
               setPage(1);
             }}
-            placeholder="Ej. sale.void"
-          />
+          >
+            <option value="">Todas</option>
+            {Object.entries(AUDIT_ACTION_LABELS).map(([code, label]) => (
+              <option key={code} value={code}>
+                {label}
+              </option>
+            ))}
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="auStart">Desde</Label>
@@ -115,6 +132,19 @@ export function AuditContent({ showTitle = true }: AuditContentProps) {
             }}
           />
         </div>
+        <Button
+          variant="secondary"
+          onClick={() =>
+            downloadExcel('/reports/audit/export', 'auditoria.xlsx', {
+              ...(userId ? { userId } : {}),
+              ...(action ? { action } : {}),
+              ...(startDate && endDate ? { startDate, endDate } : {}),
+            })
+          }
+        >
+          <FileDown size={16} strokeWidth={1.5} aria-hidden />
+          Exportar Excel
+        </Button>
       </div>
 
       <Card>
@@ -142,25 +172,25 @@ export function AuditContent({ showTitle = true }: AuditContentProps) {
                     {log.user.name}{' '}
                     <span className="text-small text-muted">{log.user.email}</span>
                   </td>
-                  <td className="px-4 py-2.5 font-mono">{log.action}</td>
+                  <td className="px-4 py-2.5">{auditActionLabel(log.action)}</td>
                   <td className="px-4 py-2.5 text-muted">
-                    {log.entity}
+                    {auditEntityLabel(log.entity)}
                     {log.entityId ? (
                       <span className="font-mono text-small"> · {log.entityId.slice(0, 8)}…</span>
                     ) : null}
                   </td>
                   <td className="max-w-64 truncate px-4 py-2.5 text-small text-muted">
-                    {log.metadata ? JSON.stringify(log.metadata) : '—'}
+                    {formatAuditMetadata(log.metadata)}
                   </td>
                 </tr>
               ))}
-              {auditQuery.data?.data.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted">
-                    No hay registros de auditoría con esos filtros.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={5}
+                isLoading={auditQuery.isPending}
+                isError={auditQuery.isError}
+                isEmpty={auditQuery.data?.data.length === 0}
+                emptyMessage="No hay registros de auditoría con esos filtros."
+              />
             </tbody>
           </table>
           {auditQuery.data?.meta && (

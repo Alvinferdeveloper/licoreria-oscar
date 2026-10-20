@@ -14,7 +14,7 @@ export class CreateUserDto {
   name: string;
 
   @ApiProperty({ example: 'maria@licoreria.local' })
-  @IsEmail()
+  @IsEmail({}, { message: 'Ingrese un email válido' })
   email: string;
 
   @ApiProperty({ example: 'Segura123*', minLength: 8 })
@@ -23,6 +23,6 @@ export class CreateUserDto {
   password: string;
 
   @ApiProperty({ description: 'ID del rol a asignar' })
-  @IsUUID()
+  @IsUUID('all', { message: 'Seleccione un rol válido' })
   roleId: string;
 }

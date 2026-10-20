@@ -7,13 +7,17 @@ import { BRAND_NAME } from '@licoreria/shared-types';
 import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
+import { FieldError } from '@/components/FieldError';
 import { useLogin } from './hooks';
 
 // Validación en cliente espejo del servidor; el servidor es la autoridad final
 const loginSchema = z.object({
   email: z.string().email('Ingrese un email válido'),
-  password: z.string().min(8, 'Mínimo 8 caracteres'),
+  password: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres'),
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
@@ -61,37 +65,31 @@ export function LoginPage() {
           )}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" required>
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
               autoComplete="email"
+              placeholder="usuario@licoreria.local"
               error={!!errors.email}
               {...register('email')}
             />
-            {errors.email && (
-              <p className="flex items-center gap-1 text-small text-status-danger">
-                <AlertCircle size={14} aria-hidden />
-                {errors.email.message}
-              </p>
-            )}
+            <FieldError message={errors.email?.message} />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <Label htmlFor="password" required>
+              Contraseña
+            </Label>
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               error={!!errors.password}
               {...register('password')}
             />
-            {errors.password && (
-              <p className="flex items-center gap-1 text-small text-status-danger">
-                <AlertCircle size={14} aria-hidden />
-                {errors.password.message}
-              </p>
-            )}
+            <FieldError message={errors.password?.message} />
           </div>
 
           <Button type="submit" size="lg" disabled={login.isPending}>

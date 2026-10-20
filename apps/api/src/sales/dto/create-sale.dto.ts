@@ -11,7 +11,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class SaleDetailDto {
   @ApiProperty({ description: 'ID del producto' })
-  @IsUUID()
+  @IsUUID('all', { message: 'Seleccione un producto válido' })
   productId: string;
 
   @ApiProperty({ example: 2, minimum: 1 })
@@ -23,7 +23,7 @@ export class SaleDetailDto {
 
 export class CreateSaleDto {
   @ApiProperty({ description: 'ID del cliente' })
-  @IsUUID()
+  @IsUUID('all', { message: 'Seleccione un cliente válido' })
   customerId: string;
 
   @ApiProperty({ type: [SaleDetailDto], minItems: 1 })

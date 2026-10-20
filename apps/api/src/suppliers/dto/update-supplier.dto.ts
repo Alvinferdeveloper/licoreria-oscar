@@ -6,6 +6,6 @@ import { CreateSupplierDto } from './create-supplier.dto';
 export class UpdateSupplierDto extends PartialType(CreateSupplierDto) {
   @ApiPropertyOptional({ description: 'Borrado lógico: desactiva sin eliminar el registro' })
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'El estado debe ser verdadero o falso' })
   isActive?: boolean;
 }

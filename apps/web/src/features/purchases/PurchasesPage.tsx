@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { Plus, Trash2, XCircle, Eye } from 'lucide-react';
-import { PurchaseStatus, UserRole } from '@licoreria/shared-types';
+import { PurchaseStatus, UserRole, CURRENCY_SYMBOL } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { toast } from '@/stores/toast.store';
+import { formatCurrency, formatDate, defaultRange } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
 import { PaginationControls } from '@/components/PaginationControls';
 
@@ -70,8 +73,8 @@ export function PurchasesPage() {
 
   const [page, setPage] = useState(1);
   const [supplierFilter, setSupplierFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(defaultRange().startDate);
+  const [endDate, setEndDate] = useState(defaultRange().endDate);
 
   const [formOpen, setFormOpen] = useState(false);
   const [supplierId, setSupplierId] = useState('');
@@ -126,6 +129,7 @@ export function PurchasesPage() {
         )
         .then((r) => r.data.data),
     onSuccess: (result) => {
+      toast('Compra registrada correctamente', 'success');
       invalidate();
       queryClient.invalidateQueries({ queryKey: ['products'] });
       closeForm();
@@ -139,6 +143,7 @@ export function PurchasesPage() {
     mutationFn: (purchase: Purchase) =>
       api.post(`/purchases/${purchase.id}/cancel`),
     onSuccess: () => {
+      toast('Compra cancelada correctamente', 'success');
       invalidate();
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setCancelling(null);
@@ -151,6 +156,7 @@ export function PurchasesPage() {
         unitPrice: Number(sp.suggestedPrice),
       }),
     onSuccess: (_r, sp) => {
+      toast('Precio de venta actualizado', 'success');
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setSuggested((prev) =>
         prev ? prev.filter((p) => p.productId !== sp.productId) : prev,
@@ -216,7 +222,7 @@ export function PurchasesPage() {
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="supplierFilter">Proveedor</Label>
-          <select
+          <Select
             id="supplierFilter"
             value={supplierFilter}
             onChange={(e) => {
@@ -231,7 +237,7 @@ export function PurchasesPage() {
                 {s.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="startDate">Desde</Label>
@@ -327,13 +333,13 @@ export function PurchasesPage() {
                   </td>
                 </tr>
               ))}
-              {purchasesQuery.data?.data.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
-                    No hay compras registradas.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={7}
+                isLoading={purchasesQuery.isPending}
+                isError={purchasesQuery.isError}
+                isEmpty={purchasesQuery.data?.data.length === 0}
+                emptyMessage="No hay compras registradas."
+              />
             </tbody>
           </table>
           {purchasesQuery.data?.meta && (
@@ -359,8 +365,10 @@ export function PurchasesPage() {
             </p>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="purchaseSupplier">Proveedor</Label>
-            <select
+            <Label htmlFor="purchaseSupplier" required>
+              Proveedor
+            </Label>
+            <Select
               id="purchaseSupplier"
               value={supplierId}
               onChange={(e) => setSupplierId(e.target.value)}
@@ -372,14 +380,17 @@ export function PurchasesPage() {
                   {s.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="flex flex-col gap-2">
             <Label>Líneas de compra</Label>
+            <span className="text-small text-muted">
+              Costo unitario en córdobas ({CURRENCY_SYMBOL}).
+            </span>
             {lines.map((line, index) => (
               <div key={index} className="flex items-end gap-2">
-                <select
+                <Select
                   value={line.productId}
                   onChange={(e) => updateLine(index, { productId: e.target.value })}
                   aria-label={`Producto de la línea ${index + 1}`}
@@ -391,7 +402,7 @@ export function PurchasesPage() {
                       {p.name} ({p.sku})
                     </option>
                   ))}
-                </select>
+                </Select>
                 <Input
                   type="number"
                   min={1}
@@ -471,7 +482,7 @@ export function PurchasesPage() {
       >
         {detail && (
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-2 text-body">
+            <div className="grid grid-cols-1 gap-2 text-body sm:grid-cols-2">
               <span className="text-muted">Fecha</span>
               <span className="font-mono">{formatDate(detail.purchaseDate)}</span>
               <span className="text-muted">Proveedor</span>

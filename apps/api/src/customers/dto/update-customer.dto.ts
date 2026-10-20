@@ -6,6 +6,6 @@ import { CreateCustomerDto } from './create-customer.dto';
 export class UpdateCustomerDto extends PartialType(CreateCustomerDto) {
   @ApiPropertyOptional({ description: 'Borrado lógico: desactiva sin eliminar el registro' })
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'El estado debe ser verdadero o falso' })
   isActive?: boolean;
 }

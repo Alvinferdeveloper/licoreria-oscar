@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -75,11 +76,20 @@ export class BackupsService {
         args,
         { env: { ...process.env, PGPASSWORD: conn.password } },
         (error, _stdout, stderr) => {
-          if (error) {
-            reject(new Error(stderr?.trim() || error.message));
-          } else {
+          if (!error) {
             resolvePromise();
+            return;
           }
+          // Binario ausente: mensaje claro en español en vez del ENOENT de Node
+          if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            reject(
+              new ServiceUnavailableException(
+                `No se encontró "${bin}". Instale las herramientas de PostgreSQL y agregue su carpeta bin al PATH.`,
+              ),
+            );
+            return;
+          }
+          reject(new Error(stderr?.trim() || error.message));
         },
       );
     });
@@ -119,6 +129,7 @@ export class BackupsService {
       await this.run('pg_dump', ['-Fc', ...this.pgArgs(conn), '-f', filePath], conn);
     } catch (error) {
       await unlink(filePath).catch(() => undefined);
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         `No se pudo generar el respaldo: ${(error as Error).message}`,
       );
@@ -209,6 +220,7 @@ export class BackupsService {
         conn,
       );
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         `No se pudo restaurar el respaldo: ${(error as Error).message}`,
       );

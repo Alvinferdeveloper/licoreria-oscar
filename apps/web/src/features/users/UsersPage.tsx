@@ -10,9 +10,12 @@ import { useAuthStore } from '@/stores/auth.store';
 import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
@@ -34,9 +37,14 @@ interface UserRow {
 }
 
 const createSchema = z.object({
-  name: z.string().min(1, 'Nombre requerido'),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Mínimo 8 caracteres'),
+  name: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100, 'El nombre no puede superar los 100 caracteres'),
+  email: z.string().email('Ingrese un email válido'),
+  password: z
+    .string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres'),
   roleId: z.string().uuid('Seleccione un rol'),
 });
 
@@ -44,7 +52,7 @@ const createSchema = z.object({
 const editSchema = createSchema.extend({
   password: z
     .string()
-    .min(8, 'Mínimo 8 caracteres')
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .optional()
     .or(z.literal('')),
 });
@@ -94,9 +102,6 @@ export function UsersPage() {
       invalidate();
       closeForm();
     },
-    onError: () => {
-      toast('Error al guardar el usuario', 'danger');
-    },
   });
 
   const toggleActive = useMutation({
@@ -108,9 +113,6 @@ export function UsersPage() {
       toast('Estado actualizado', 'success');
       invalidate();
       setToggleConfirmId(null);
-    },
-    onError: () => {
-      toast('Error al cambiar el estado', 'danger');
     },
   });
 
@@ -192,7 +194,7 @@ export function UsersPage() {
                     {formatDate(row.createdAt)}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-<Button
+                      <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => openEdit(row)}
@@ -203,8 +205,13 @@ export function UsersPage() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={currentUser?.id === row.id || toggleActive.isPending}
+                        title={
+                          currentUser?.id === row.id
+                            ? 'No puede desactivar su propio usuario'
+                            : undefined
+                        }
                         onClick={() => {
-                          if (currentUser?.id === row.id) return;
                           if (row.isActive) {
                             setToggleAction('deactivate');
                           } else {
@@ -213,9 +220,11 @@ export function UsersPage() {
                           setToggleConfirmId(row.id);
                         }}
                         aria-label={
-                          row.isActive
-                            ? 'Desactivar usuario'
-                            : 'Reactivar usuario'
+                          currentUser?.id === row.id
+                            ? 'No puede desactivar su propio usuario'
+                            : row.isActive
+                              ? `Desactivar ${row.name}`
+                              : `Reactivar ${row.name}`
                         }
                       >
                         {row.isActive ? (
@@ -227,13 +236,13 @@ export function UsersPage() {
                   </td>
                 </tr>
               ))}
-              {usersQuery.data?.data.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                    No hay usuarios registrados.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={6}
+                isLoading={usersQuery.isPending}
+                isError={usersQuery.isError}
+                isEmpty={usersQuery.data?.data.length === 0}
+                emptyMessage="No hay usuarios registrados."
+              />
             </tbody>
           </table>
           {usersQuery.data?.meta && (
@@ -267,52 +276,64 @@ export function UsersPage() {
             </p>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
-            <Input id="name" error={!!errors.name} {...register('name')} />
+            <Label htmlFor="name" required>
+              Nombre
+            </Label>
+            <Input
+              id="name"
+              placeholder="Ej. Ana Martínez"
+              error={!!errors.name}
+              {...register('name')}
+            />
             <FieldError message={errors.name?.message} />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" required>
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
+              placeholder="Ej. ana@licoreria.local"
               error={!!errors.email}
               {...register('email')}
             />
             <FieldError message={errors.email?.message} />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">
+            <Label htmlFor="password" required={!editing}>
               Contraseña{editing && ' (vacía = no cambiar)'}
             </Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="new-password"
+              placeholder="Mínimo 8 caracteres"
               error={!!errors.password}
               {...register('password')}
             />
             <FieldError message={errors.password?.message} />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="roleId">Rol</Label>
-            <select
-              id="roleId"
-              className="h-10 rounded-sm border border-border bg-surface-sunken px-3 text-body text-ink focus-visible:border-brand-copper"
-              {...register('roleId')}
-            >
+            <Label htmlFor="roleId" required>
+              Rol
+            </Label>
+            <Select id="roleId" error={!!errors.roleId} {...register('roleId')}>
               <option value="">Seleccione…</option>
               {rolesQuery.data?.map((role) => (
                 <option key={role.id} value={role.id}>
                   {role.name}
                 </option>
               ))}
-            </select>
+            </Select>
             <FieldError message={errors.roleId?.message} />
           </div>
           <div className="flex gap-3">
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Guardando…' : 'Guardar'}
+              {save.isPending
+                ? 'Guardando…'
+                : editing
+                  ? 'Guardar cambios'
+                  : 'Crear usuario'}
             </Button>
             <Button type="button" variant="secondary" onClick={closeForm}>
               Cancelar

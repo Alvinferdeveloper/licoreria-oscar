@@ -21,7 +21,7 @@ export class CreateSupplierDto {
 
   @ApiPropertyOptional({ example: 'ventas@distribuidora.com' })
   @IsOptional()
-  @IsEmail()
+  @IsEmail({}, { message: 'Ingrese un email válido' })
   email?: string;
 
   @ApiPropertyOptional({ example: 'Managua, Nicaragua' })

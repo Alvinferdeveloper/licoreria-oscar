@@ -1,13 +1,16 @@
 import { Fragment, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { defaultRange } from './reports-utils';
+import { TableState } from '@/components/TableState';
+import { defaultRange, downloadExcel } from './reports-utils';
 
 interface Option {
   id: string;
@@ -90,7 +93,7 @@ export function PurchasesReport() {
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="prSupplier">Proveedor</Label>
-          <select
+          <Select
             id="prSupplier"
             value={supplierId}
             onChange={(e) => setSupplierId(e.target.value)}
@@ -102,8 +105,22 @@ export function PurchasesReport() {
                 {s.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
+        <Button
+          variant="secondary"
+          disabled={!startDate || !endDate}
+          onClick={() =>
+            downloadExcel(
+              '/reports/purchases/export',
+              `compras-${startDate}-a-${endDate}.xlsx`,
+              params,
+            )
+          }
+        >
+          <FileDown size={16} strokeWidth={1.5} aria-hidden />
+          Exportar Excel
+        </Button>
       </div>
 
       {summary && (
@@ -205,13 +222,13 @@ export function PurchasesReport() {
                   )}
                 </Fragment>
               ))}
-              {reportQuery.data?.purchases.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                    No hay compras en el rango seleccionado.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={6}
+                isLoading={reportQuery.isPending && !!startDate && !!endDate}
+                isError={reportQuery.isError}
+                isEmpty={reportQuery.data?.purchases.length === 0}
+                emptyMessage="No hay compras en el rango seleccionado."
+              />
             </tbody>
           </table>
         </CardContent>

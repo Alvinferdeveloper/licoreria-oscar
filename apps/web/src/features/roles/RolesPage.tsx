@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Save } from 'lucide-react';
 import { api } from '@/lib/api';
+import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -40,6 +41,7 @@ export function RolesPage() {
     mutationFn: ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) =>
       api.put(`/roles/${roleId}/permissions`, { permissionIds }),
     onSuccess: (_res, { roleId }) => {
+      toast('Permisos actualizados correctamente', 'success');
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       setDrafts((d) => {
         const next = { ...d };
@@ -120,7 +122,16 @@ export function RolesPage() {
                       checked={currentIds(role).has(permission.id)}
                       onChange={() => toggle(role.id, permission.id, role)}
                     />
-                    <span className="font-mono text-small">{permission.code}</span>
+                    <span className="flex flex-col">
+                      <span className="text-body">
+                        {permission.description ?? permission.code}
+                      </span>
+                      {permission.description && (
+                        <span className="font-mono text-small text-muted">
+                          {permission.code}
+                        </span>
+                      )}
+                    </span>
                   </label>
                 ))}
               </div>

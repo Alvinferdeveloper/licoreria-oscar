@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAdjustmentDto {
   @ApiProperty({ description: 'ID del producto' })
-  @IsUUID()
+  @IsUUID('all', { message: 'Seleccione un producto válido' })
   productId: string;
 
   @ApiProperty({

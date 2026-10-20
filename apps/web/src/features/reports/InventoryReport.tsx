@@ -5,6 +5,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { downloadExcel } from './reports-utils';
 
 interface InventoryRow {
@@ -127,13 +128,13 @@ export function InventoryReport() {
                   </td>
                 </tr>
               ))}
-              {reportQuery.data?.products.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-muted">
-                    No hay productos activos.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={9}
+                isLoading={reportQuery.isPending}
+                isError={reportQuery.isError}
+                isEmpty={reportQuery.data?.products.length === 0}
+                emptyMessage="No hay productos activos."
+              />
             </tbody>
           </table>
         </CardContent>

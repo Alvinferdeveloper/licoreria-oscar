@@ -3,9 +3,12 @@
 @tailwind utilities;
 
 /* ─── Tokens del sistema de diseño (color, superficie, texto) ─── */
+/* Los tokens que se usan con modificadores de opacidad exponen su triple RGB
+   en `--x-rgb`; el color final se deriva con `rgb(var(--x-rgb))`. */
 :root {
   /* Marca (núcleo, no cambian entre modos salvo copper-on-dark) */
-  --brand-copper: #a6632b;
+  --brand-copper-rgb: 166 99 43;
+  --brand-copper: rgb(var(--brand-copper-rgb));
   --brand-copper-strong: #7c4a1e;
   --brand-amber: #c98a32;
   --brand-cava: #1f3d33;
@@ -14,33 +17,49 @@
   /* Neutrales — modo claro */
   --surface-base: #edeeea;
   --surface-card: #f8f5ee;
-  --surface-sunken: #e2e3dd;
+  --surface-sunken-rgb: 226 227 221;
+  --surface-sunken: rgb(var(--surface-sunken-rgb));
   --border-hairline: #d8d6cc;
   --text-ink: #241c15;
-  --text-muted: #5a5248;
+  --text-muted-rgb: 90 82 72;
+  --text-muted: rgb(var(--text-muted-rgb));
 
   /* Semánticos — modo claro */
-  --status-success: #2f7d5a;
-  --status-danger: #b23a34;
-  --status-warning: #c08a1e;
-  --status-info: #3b6e91;
+  --status-success-rgb: 47 125 90;
+  --status-success: rgb(var(--status-success-rgb));
+  --status-danger-rgb: 178 58 52;
+  --status-danger: rgb(var(--status-danger-rgb));
+  --status-warning-rgb: 192 138 30;
+  --status-warning: rgb(var(--status-warning-rgb));
+  --status-info-rgb: 59 110 145;
+  --status-info: rgb(var(--status-info-rgb));
+
+  /* Texto sobre el sidebar cava — constante en ambos modos (el fondo cava no
+     cambia); el valor muted se aclaró para cumplir contraste AA (≥4.5:1) */
+  --text-on-cava: #ede7d8;
+  --text-on-cava-muted: #b3aa98;
+
+  /* 6ª categoría de la paleta cualitativa de gráficos */
+  --chart-plum: #6b4e71;
 }
 
 .dark {
-  --brand-copper: #c17a3d; /* cobre aclarado para contraste AA sobre oscuro */
+  --brand-copper-rgb: 193 122 61; /* cobre aclarado para contraste AA sobre oscuro */
   --brand-copper-strong: #a6632b;
 
   --surface-base: #17140f;
   --surface-card: #201a13;
-  --surface-sunken: #0f0d09;
+  --surface-sunken-rgb: 15 13 9;
   --border-hairline: rgba(201, 138, 50, 0.16);
   --text-ink: #ede7d8;
-  --text-muted: #a79e8c;
+  --text-muted-rgb: 167 158 140;
 
-  --status-success: #4c9b78;
-  --status-danger: #d6564f;
-  --status-warning: #d9a23b;
-  --status-info: #5b93b8;
+  --status-success-rgb: 76 155 120;
+  --status-danger-rgb: 214 86 79;
+  --status-warning-rgb: 217 162 59;
+  --status-info-rgb: 91 147 184;
+
+  --chart-plum: #8a6b90;
 }
 
 @layer base {
@@ -85,6 +104,11 @@
   }
   .table-scroll > table {
     @apply min-w-[640px];
+  }
+
+  /* Cifras tabulares: alineación vertical de montos en columnas */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
   }
 }
 

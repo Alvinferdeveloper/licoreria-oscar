@@ -6,8 +6,10 @@ import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { PaginationControls } from '@/components/PaginationControls';
 import { downloadExcel } from './reports-utils';
 
@@ -69,7 +71,7 @@ export function KardexReport() {
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex min-w-64 flex-col gap-2">
           <Label htmlFor="krProduct">Producto</Label>
-          <select
+          <Select
             id="krProduct"
             value={productId}
             onChange={(e) => {
@@ -84,7 +86,7 @@ export function KardexReport() {
                 {p.name} ({p.sku})
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         {productId && (
           <Button
@@ -161,13 +163,13 @@ export function KardexReport() {
                   </td>
                 </tr>
               )}
-              {productId && kardexQuery.data?.data.movements.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted">
-                    Este producto aún no tiene movimientos.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={5}
+                isLoading={!!productId && kardexQuery.isPending}
+                isError={!!productId && kardexQuery.isError}
+                isEmpty={!!productId && kardexQuery.data?.data.movements.length === 0}
+                emptyMessage="Este producto aún no tiene movimientos."
+              />
             </tbody>
           </table>
           {kardexQuery.data?.meta && (

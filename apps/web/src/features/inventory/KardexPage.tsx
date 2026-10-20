@@ -10,10 +10,11 @@ import { formatDateTime } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
-import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
 
 interface Product {
@@ -52,6 +53,7 @@ export function KardexPage() {
   const [page, setPage] = useState(1);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [quantity, setQuantity] = useState('0');
+  const [direction, setDirection] = useState<'in' | 'out'>('in');
   const [reason, setReason] = useState('');
 
   const productsQuery = useQuery({
@@ -89,10 +91,8 @@ export function KardexPage() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setAdjustOpen(false);
       setQuantity('0');
+      setDirection('in');
       setReason('');
-    },
-    onError: () => {
-      toast('Error al aplicar el ajuste', 'danger');
     },
   });
 
@@ -154,7 +154,7 @@ export function KardexPage() {
       {/* Selector de producto */}
       <div className="flex max-w-md flex-col gap-2">
         <Label htmlFor="kardexProduct">Producto</Label>
-        <select
+        <Select
           id="kardexProduct"
           value={productId}
           onChange={(e) => {
@@ -169,7 +169,7 @@ export function KardexPage() {
               {p.name} ({p.sku})
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {selectedProduct && (
@@ -231,13 +231,13 @@ export function KardexPage() {
                   </td>
                 </tr>
               )}
-              {productId && kardexQuery.data?.data.movements.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted">
-                    Este producto aún no tiene movimientos.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={5}
+                isLoading={!!productId && kardexQuery.isPending}
+                isError={!!productId && kardexQuery.isError}
+                isEmpty={!!productId && kardexQuery.data?.data.movements.length === 0}
+                emptyMessage="Este producto aún no tiene movimientos."
+              />
             </tbody>
           </table>
           {kardexQuery.data?.meta && (
@@ -260,9 +260,10 @@ export function KardexPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            const magnitude = Math.abs(Number(quantity));
             adjust.mutate({
               productId,
-              quantity: Number(quantity),
+              quantity: direction === 'in' ? magnitude : -magnitude,
               reason: reason.trim(),
             });
           }}
@@ -278,31 +279,40 @@ export function KardexPage() {
             </p>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="adjustQty">
-              Cantidad (positiva = entrada, negativa = salida)
+            <Label htmlFor="adjustDirection" required>
+              Tipo de ajuste
+            </Label>
+            <Select
+              id="adjustDirection"
+              value={direction}
+              onChange={(e) => setDirection(e.target.value as 'in' | 'out')}
+            >
+              <option value="in">Entrada (suma al stock)</option>
+              <option value="out">Salida (resta del stock)</option>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="adjustQty" required>
+              Cantidad
             </Label>
             <Input
               id="adjustQty"
               type="number"
+              min={0}
               step={1}
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="adjustReason">Motivo</Label>
+            <Label htmlFor="adjustReason" required>
+              Motivo
+            </Label>
             <Input
               id="adjustReason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Ej. producto dañado, conteo físico…"
-            />
-            <FieldError
-              message={
-                !reason.trim() && adjust.isError
-                  ? 'El motivo es requerido'
-                  : undefined
-              }
             />
           </div>
           <div className="flex gap-3">

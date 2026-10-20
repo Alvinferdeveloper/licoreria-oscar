@@ -23,7 +23,7 @@ export class CreateProductDto {
   name: string;
 
   @ApiProperty({ description: 'ID de la categoría' })
-  @IsUUID()
+  @IsUUID('all', { message: 'Seleccione una categoría válida' })
   categoryId: string;
 
   @ApiProperty({ example: 350.0, description: 'Precio de venta vigente' })

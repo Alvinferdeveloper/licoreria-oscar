@@ -1,6 +1,15 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from '@/stores/toast.store';
+import { getErrorMessage } from '@/lib/utils';
+
+// El manejo global de errores puede desactivarse por request (p. ej. descargas
+// de blob, donde el mensaje del backend no es legible y la página lo maneja).
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    skipGlobalErrorToast?: boolean;
+  }
+}
 
 export const api = axios.create({
   baseURL: '/api/v1',
@@ -56,12 +65,17 @@ api.interceptors.response.use(
     }
 
     const status = error.response?.status;
-    if (!error.response) {
-      toast('No se pudo conectar con el servidor', 'danger');
-    } else if (status === 403) {
-      toast('No tienes permisos para esta acción', 'danger');
-    } else if (status === 500) {
-      toast('Error interno del servidor. Intentalo más tarde.', 'danger');
+    if (!original?.skipGlobalErrorToast) {
+      if (!error.response) {
+        toast('No se pudo conectar con el servidor', 'danger');
+      } else if (status === 403) {
+        toast('No tienes permisos para esta acción', 'danger');
+      } else if (status === 400 || status === 404 || status === 409) {
+        // Errores de negocio/validación: se muestra el mensaje del backend
+        toast(getErrorMessage(error), 'danger');
+      } else if (status === 500) {
+        toast('Error interno del servidor. Intentalo más tarde.', 'danger');
+      }
     }
 
     return Promise.reject(error);

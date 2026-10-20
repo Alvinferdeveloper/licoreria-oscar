@@ -8,6 +8,6 @@ export class SetRolePermissionsDto {
   })
   @IsArray({ message: 'Debe proporcionar una lista de permisos' })
   @ArrayNotEmpty({ message: 'Debe asignar al menos un permiso' })
-  @IsUUID('4')
+  @IsUUID('all', { each: true, message: 'Hay un permiso con un identificador inválido' })
   permissionIds: string[];
 }

@@ -79,10 +79,15 @@ export class AuthController {
   }
 
   private setRefreshCookie(res: Response, token: string) {
+    // Cookie segura solo bajo HTTPS; COOKIE_SECURE=false la permite en demos por LAN
+    const secure =
+      process.env.COOKIE_SECURE !== undefined
+        ? process.env.COOKIE_SECURE === 'true'
+        : process.env.NODE_ENV === 'production';
     res.cookie(REFRESH_COOKIE, token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure,
       maxAge: REFRESH_COOKIE_MAX_AGE,
       path: '/api/v1/auth',
     });

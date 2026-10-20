@@ -43,7 +43,15 @@ npm run dev:api    # http://localhost:3000/api/v1 — Swagger en /api/docs
 npm run dev:web    # http://localhost:5173
 ```
 
-Credenciales iniciales del seed: `admin@licoreria.local` / `Admin123*` (configurables en `apps/api/.env`).
+Credenciales iniciales del seed (configurables en `apps/api/.env`):
+
+| Rol | Email | Contraseña |
+|---|---|---|
+| Administrador | `admin@licoreria.local` | `Admin123*` |
+| Vendedor | `vendedor@licoreria.local` | `Vendedor123*` |
+| Consulta | `consulta@licoreria.local` | `Consulta123*` |
+
+El seed también carga datos de demo (categorías, productos, proveedores, clientes, compras, ventas y Kardex) con fechas recientes, y sincroniza la secuencia de numeración de facturas.
 
 ## Scripts útiles
 

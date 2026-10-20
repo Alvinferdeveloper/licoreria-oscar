@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -87,16 +87,31 @@ export function AppLayout() {
   const { dark, toggle } = useThemeStore();
   const logout = useLogout();
   const [navOpen, setNavOpen] = useState(false);
+  const { pathname } = useLocation();
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => !item.roles || (user && item.roles.includes(user.role)),
   );
 
+  // Migas de pan derivadas de la ruta actual (usa las etiquetas del sidebar)
+  const labelByPath: Record<string, string> = {
+    ...Object.fromEntries(NAV_ITEMS.map((item) => [item.to, item.label])),
+    '/ventas/nueva': 'Nueva venta',
+  };
+  const segments = pathname.split('/').filter(Boolean);
+  const crumbs =
+    segments.length === 0
+      ? [{ to: '/', label: 'Dashboard' }]
+      : segments.map((segment, i) => {
+          const to = `/${segments.slice(0, i + 1).join('/')}`;
+          return { to, label: labelByPath[to] ?? segment };
+        });
+
   const navContent = (onNavigate?: () => void) => (
     <>
       <div className="flex items-center gap-3 px-5 py-5">
         <BrandMark className="h-9 w-9" />
-        <span className="font-display text-h2 font-medium leading-tight">
+        <span className="text-h2 font-semibold leading-tight">
           {BRAND_NAME}
         </span>
       </div>
@@ -113,7 +128,7 @@ export function AppLayout() {
                 'flex items-center gap-3 border-l-[3px] border-transparent px-5 py-2.5 text-body transition-colors duration-150',
                 isActive
                   ? 'border-brand-copper bg-brand-cava-soft text-white'
-                  : 'text-[#A79E8C] hover:bg-brand-cava-soft hover:text-white',
+                  : 'text-on-cava-muted hover:bg-brand-cava-soft hover:text-white',
               )
             }
           >
@@ -128,7 +143,7 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar fijo en desktop, oculto en tablet/móvil */}
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col bg-brand-cava text-[#EDE7D8] lg:flex">
+      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col bg-brand-cava text-on-cava lg:flex">
         {navContent()}
       </aside>
 
@@ -140,14 +155,14 @@ export function AppLayout() {
           role="presentation"
         >
           <aside
-            className="flex h-full w-60 flex-col bg-brand-cava text-[#EDE7D8]"
+            className="flex h-full w-60 flex-col bg-brand-cava text-on-cava"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-end px-3 pt-3">
               <button
                 onClick={() => setNavOpen(false)}
                 aria-label="Cerrar menú"
-                className="rounded-sm p-1 text-[#A79E8C] hover:bg-brand-cava-soft hover:text-white"
+                className="rounded-sm p-1 text-on-cava-muted hover:bg-brand-cava-soft hover:text-white"
               >
                 <X size={20} strokeWidth={1.5} />
               </button>
@@ -170,9 +185,28 @@ export function AppLayout() {
             >
               <Menu size={20} strokeWidth={1.5} />
             </Button>
-            <span className="text-small text-muted" aria-live="polite">
-              {/* breadcrumb se enriquecerá por ruta en fases siguientes */}
-            </span>
+            <nav aria-label="Ruta" aria-live="polite">
+              <ol className="flex items-center gap-1.5 text-small text-muted">
+                {crumbs.map((crumb, i) => (
+                  <li key={crumb.to} className="flex items-center gap-1.5">
+                    {i > 0 && (
+                      <span aria-hidden className="text-muted/60">
+                        /
+                      </span>
+                    )}
+                    {i === crumbs.length - 1 ? (
+                      <span aria-current="page" className="font-medium text-ink">
+                        {crumb.label}
+                      </span>
+                    ) : (
+                      <NavLink to={crumb.to} className="hover:text-ink">
+                        {crumb.label}
+                      </NavLink>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
           </div>
 
           <div className="flex items-center gap-3">

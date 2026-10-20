@@ -21,7 +21,7 @@ export class CreateCustomerDto {
 
   @ApiPropertyOptional({ example: 'juan@correo.com' })
   @IsOptional()
-  @IsEmail()
+  @IsEmail({}, { message: 'Ingrese un email válido' })
   email?: string;
 
   @ApiPropertyOptional({ example: 'Managua, Nicaragua' })

@@ -6,12 +6,15 @@ import { Plus, Eye, XCircle, FileDown } from 'lucide-react';
 import { SaleStatus, UserRole } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { toast } from '@/stores/toast.store';
+import { formatCurrency, formatDateTime, getErrorMessage, defaultRange } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
 import { PaginationControls } from '@/components/PaginationControls';
 
@@ -50,8 +53,8 @@ export function SalesPage() {
   const [page, setPage] = useState(1);
   const [customerFilter, setCustomerFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(defaultRange().startDate);
+  const [endDate, setEndDate] = useState(defaultRange().endDate);
 
   const [detail, setDetail] = useState<Sale | null>(null);
   const [voiding, setVoiding] = useState<Sale | null>(null);
@@ -86,6 +89,7 @@ export function SalesPage() {
   const voidSale = useMutation({
     mutationFn: (sale: Sale) => api.post(`/sales/${sale.id}/void`),
     onSuccess: () => {
+      toast('Venta anulada correctamente', 'success');
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       setVoiding(null);
@@ -100,11 +104,16 @@ export function SalesPage() {
 
   // El PDF viaja con el JWT del interceptor; se descarga como blob
   const downloadPdf = async (sale: Sale) => {
-    const res = await api.get(`/sales/${sale.id}/pdf`, {
-      responseType: 'blob',
-    });
-    const url = URL.createObjectURL(res.data as Blob);
-    window.open(url, '_blank');
+    try {
+      const res = await api.get(`/sales/${sale.id}/pdf`, {
+        responseType: 'blob',
+        skipGlobalErrorToast: true,
+      });
+      const url = URL.createObjectURL(res.data as Blob);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast(getErrorMessage(error, 'No se pudo descargar la factura'), 'danger');
+    }
   };
 
   const canVoid = (sale: Sale) =>
@@ -129,7 +138,7 @@ export function SalesPage() {
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="customerFilter">Cliente</Label>
-          <select
+          <Select
             id="customerFilter"
             value={customerFilter}
             onChange={(e) => {
@@ -144,11 +153,11 @@ export function SalesPage() {
                 {c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="statusFilter">Estado</Label>
-          <select
+          <Select
             id="statusFilter"
             value={statusFilter}
             onChange={(e) => {
@@ -160,7 +169,7 @@ export function SalesPage() {
             <option value="">Todos</option>
             <option value={SaleStatus.ISSUED}>Emitida</option>
             <option value={SaleStatus.VOIDED}>Anulada</option>
-          </select>
+          </Select>
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="startDate">Desde</Label>
@@ -256,13 +265,13 @@ export function SalesPage() {
                   </td>
                 </tr>
               ))}
-              {salesQuery.data?.data.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
-                    No hay ventas registradas.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={7}
+                isLoading={salesQuery.isPending}
+                isError={salesQuery.isError}
+                isEmpty={salesQuery.data?.data.length === 0}
+                emptyMessage="No hay ventas registradas."
+              />
             </tbody>
           </table>
           {salesQuery.data?.meta && (
@@ -276,14 +285,26 @@ export function SalesPage() {
         </CardContent>
       </Card>
 
-      {/* Detalle de venta */}
+      {/* Detalle de venta — momento de marca: encabezado FACTURA + Línea de Vertido */}
       <Modal
         open={detail !== null}
         onClose={() => setDetail(null)}
-        title={`Factura ${detail?.invoiceNumber ?? ''}`}
+        title="Detalle de venta"
+        className="max-w-2xl"
       >
         {detail && (
           <div className="flex flex-col gap-4">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="font-display text-display-md font-medium leading-none">
+                  FACTURA
+                </p>
+                <div className="pour-line mt-2" />
+              </div>
+              <p className="font-mono text-body text-muted">
+                No. {detail.invoiceNumber}
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-2 text-body">
               <span className="text-muted">Fecha</span>
               <span className="font-mono">{formatDateTime(detail.saleDate)}</span>

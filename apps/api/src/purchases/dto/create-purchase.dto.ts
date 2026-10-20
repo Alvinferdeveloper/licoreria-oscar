@@ -12,7 +12,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class PurchaseDetailDto {
   @ApiProperty({ description: 'ID del producto' })
-  @IsUUID()
+  @IsUUID('all', { message: 'Seleccione un producto válido' })
   productId: string;
 
   @ApiProperty({ example: 12, minimum: 1 })
@@ -30,7 +30,7 @@ export class PurchaseDetailDto {
 
 export class CreatePurchaseDto {
   @ApiProperty({ description: 'ID del proveedor' })
-  @IsUUID()
+  @IsUUID('all', { message: 'Seleccione un proveedor válido' })
   supplierId: string;
 
   @ApiProperty({ type: [PurchaseDetailDto], minItems: 1 })

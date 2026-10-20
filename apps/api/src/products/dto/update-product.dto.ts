@@ -8,11 +8,11 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
     description: 'Clave del objeto en el bucket, confirmada tras la subida',
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'La clave de la imagen debe ser texto' })
   imageKey?: string | null;
 
   @ApiPropertyOptional({ description: 'Borrado lógico: desactiva sin eliminar el registro' })
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: 'El estado debe ser verdadero o falso' })
   isActive?: boolean;
 }

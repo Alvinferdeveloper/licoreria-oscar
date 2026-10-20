@@ -4,16 +4,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios, { AxiosError } from 'axios';
-import { Pencil, Plus, Search, Wine, UserX, UserCheck, ImagePlus } from 'lucide-react';
-import { UserRole } from '@licoreria/shared-types';
+import { Pencil, Plus, Search, Wine, Ban, RotateCcw, ImagePlus } from 'lucide-react';
+import { UserRole, CURRENCY_SYMBOL } from '@licoreria/shared-types';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
@@ -42,13 +44,30 @@ interface Category {
 }
 
 const productSchema = z.object({
-  sku: z.string().min(1, 'SKU requerido').max(40),
-  name: z.string().min(1, 'Nombre requerido').max(120),
+  sku: z
+    .string()
+    .min(1, 'El SKU es obligatorio')
+    .max(40, 'El SKU no puede superar los 40 caracteres'),
+  name: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(120, 'El nombre no puede superar los 120 caracteres'),
   categoryId: z.string().uuid('Seleccione una categoría'),
-  unitPrice: z.coerce.number().min(0, 'No puede ser negativo'),
-  taxRate: z.coerce.number().min(0).max(100).optional(),
-  marginPercentage: z.coerce.number().min(0).optional(),
-  minStock: z.coerce.number().int().min(0).optional(),
+  unitPrice: z.coerce.number().min(0, 'El precio no puede ser negativo'),
+  taxRate: z.coerce
+    .number()
+    .min(0, 'El impuesto no puede ser negativo')
+    .max(100, 'El impuesto no puede superar el 100%')
+    .optional(),
+  marginPercentage: z.coerce
+    .number()
+    .min(0, 'El margen no puede ser negativo')
+    .optional(),
+  minStock: z.coerce
+    .number()
+    .int('El stock mínimo debe ser un número entero')
+    .min(0, 'El stock mínimo no puede ser negativo')
+    .optional(),
 });
 type ProductForm = z.infer<typeof productSchema>;
 
@@ -137,9 +156,6 @@ export function ProductsPage() {
       invalidate();
       closeForm();
     },
-    onError: () => {
-      toast('Error al guardar el producto', 'danger');
-    },
   });
 
   const toggleActive = useMutation({
@@ -151,9 +167,6 @@ export function ProductsPage() {
       toast('Estado actualizado', 'success');
       invalidate();
       setToggleConfirmId(null);
-    },
-    onError: () => {
-      toast('Error al cambiar el estado', 'danger');
     },
   });
 
@@ -247,8 +260,8 @@ export function ProductsPage() {
             aria-label="Buscar productos"
           />
         </div>
-        <select
-          className="h-10 rounded-sm border border-border bg-surface-sunken px-3 text-body text-ink focus-visible:border-brand-copper"
+        <Select
+          className="h-10 w-auto rounded-sm border border-border bg-surface-sunken px-3 text-body text-ink focus-visible:border-brand-copper"
           value={categoryFilter}
           onChange={(e) => {
             setCategoryFilter(e.target.value);
@@ -262,7 +275,7 @@ export function ProductsPage() {
               {category.name}
             </option>
           ))}
-        </select>
+        </Select>
         <label className="flex items-center gap-2 text-body text-muted">
           <input
             type="checkbox"
@@ -331,6 +344,7 @@ export function ProductsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={toggleActive.isPending}
                         onClick={() => {
                           if (product.isActive) {
                             setToggleAction('deactivate');
@@ -346,25 +360,22 @@ export function ProductsPage() {
                         }
                       >
                         {product.isActive ? (
-                          <UserX size={16} strokeWidth={1.5} />
+                          <Ban size={16} strokeWidth={1.5} />
                         ) : (
-                          <UserCheck size={16} strokeWidth={1.5} />
+                          <RotateCcw size={16} strokeWidth={1.5} />
                         )}
                       </Button>
                     </td>
                   )}
                 </tr>
               ))}
-              {productsQuery.data?.data.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={isAdmin ? 8 : 7}
-                    className="px-4 py-8 text-center text-muted"
-                  >
-                    No hay productos que coincidan con los filtros.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={isAdmin ? 8 : 7}
+                isLoading={productsQuery.isPending}
+                isError={productsQuery.isError}
+                isEmpty={productsQuery.data?.data.length === 0}
+                emptyMessage="No hay productos que coincidan con los filtros."
+              />
             </tbody>
           </table>
           {productsQuery.data?.meta && (
@@ -396,42 +407,57 @@ export function ProductsPage() {
               {serverError}
             </p>
           )}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="sku">SKU</Label>
-              <Input id="sku" error={!!errors.sku} {...register('sku')} />
+              <Label htmlFor="sku" required>
+                SKU
+              </Label>
+              <Input
+                id="sku"
+                placeholder="Ej. WHI-001"
+                error={!!errors.sku}
+                {...register('sku')}
+              />
               <FieldError message={errors.sku?.message} />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="categoryId">Categoría</Label>
-              <select
-                id="categoryId"
-                className="h-10 rounded-sm border border-border bg-surface-sunken px-3 text-body text-ink focus-visible:border-brand-copper"
-                {...register('categoryId')}
-              >
+              <Label htmlFor="categoryId" required>
+                Categoría
+              </Label>
+              <Select id="categoryId" error={!!errors.categoryId} {...register('categoryId')}>
                 <option value="">Seleccione…</option>
                 {categoriesQuery.data?.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               <FieldError message={errors.categoryId?.message} />
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
-            <Input id="name" error={!!errors.name} {...register('name')} />
+            <Label htmlFor="name" required>
+              Nombre
+            </Label>
+            <Input
+              id="name"
+              placeholder="Ej. Whisky escocés 750 ml"
+              error={!!errors.name}
+              {...register('name')}
+            />
             <FieldError message={errors.name?.message} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="unitPrice">Precio de venta</Label>
+              <Label htmlFor="unitPrice" required>
+                Precio de venta ({CURRENCY_SYMBOL})
+              </Label>
               <Input
                 id="unitPrice"
                 type="number"
                 step="0.01"
                 min="0"
+                placeholder="0.00"
                 error={!!errors.unitPrice}
                 {...register('unitPrice')}
               />
@@ -444,11 +470,14 @@ export function ProductsPage() {
                 type="number"
                 step="1"
                 min="0"
+                placeholder="Ej. 6"
+                error={!!errors.minStock}
                 {...register('minStock')}
               />
+              <FieldError message={errors.minStock?.message} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="taxRate">Impuesto % (vacío = default)</Label>
               <Input
@@ -457,8 +486,11 @@ export function ProductsPage() {
                 step="0.01"
                 min="0"
                 max="100"
+                placeholder="15"
+                error={!!errors.taxRate}
                 {...register('taxRate')}
               />
+              <FieldError message={errors.taxRate?.message} />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="marginPercentage">Margen % (vacío = default)</Label>
@@ -467,8 +499,11 @@ export function ProductsPage() {
                 type="number"
                 step="0.01"
                 min="0"
+                placeholder="30"
+                error={!!errors.marginPercentage}
                 {...register('marginPercentage')}
               />
+              <FieldError message={errors.marginPercentage?.message} />
             </div>
           </div>
 
@@ -501,7 +536,11 @@ export function ProductsPage() {
 
           <div className="flex gap-3">
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Guardando…' : 'Guardar'}
+              {save.isPending
+                ? 'Guardando…'
+                : editing
+                  ? 'Guardar cambios'
+                  : 'Crear producto'}
             </Button>
             <Button type="button" variant="secondary" onClick={closeForm}>
               Cancelar

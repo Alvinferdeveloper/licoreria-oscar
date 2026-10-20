@@ -8,14 +8,16 @@ import {
   Upload,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { toast } from '@/stores/toast.store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
 import { PaginationControls } from '@/components/PaginationControls';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, getErrorMessage } from '@/lib/utils';
 
 interface BackupRow {
   id: string;
@@ -63,6 +65,7 @@ export function BackupsPage() {
   const create = useMutation({
     mutationFn: () => api.post('/backups'),
     onSuccess: () => {
+      toast('Respaldo generado correctamente', 'success');
       queryClient.invalidateQueries({ queryKey: ['backups'] });
     },
   });
@@ -86,15 +89,20 @@ export function BackupsPage() {
   });
 
   const download = async (backup: BackupRow) => {
-    const res = await api.get(`/backups/${backup.id}/download`, {
-      responseType: 'blob',
-    });
-    const url = URL.createObjectURL(res.data as Blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = backup.filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const res = await api.get(`/backups/${backup.id}/download`, {
+        responseType: 'blob',
+        skipGlobalErrorToast: true,
+      });
+      const url = URL.createObjectURL(res.data as Blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = backup.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast(getErrorMessage(error, 'No se pudo descargar el respaldo'), 'danger');
+    }
   };
 
   const clearFile = () => {
@@ -170,13 +178,13 @@ export function BackupsPage() {
                   </td>
                 </tr>
               ))}
-              {backupsQuery.data?.data.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                    No hay respaldos registrados.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={6}
+                isLoading={backupsQuery.isPending}
+                isError={backupsQuery.isError}
+                isEmpty={backupsQuery.data?.data.length === 0}
+                emptyMessage="No hay respaldos registrados."
+              />
             </tbody>
           </table>
           {backupsQuery.data?.meta && (

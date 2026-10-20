@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
@@ -30,11 +31,27 @@ interface Customer {
 }
 
 const customerSchema = z.object({
-  name: z.string().min(1, 'Nombre requerido').max(120),
-  documentId: z.string().max(30).optional(),
-  phone: z.string().max(30).optional(),
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
-  address: z.string().max(255).optional(),
+  name: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(120, 'El nombre no puede superar los 120 caracteres'),
+  documentId: z
+    .string()
+    .max(30, 'El documento no puede superar los 30 caracteres')
+    .optional(),
+  phone: z
+    .string()
+    .max(30, 'El teléfono no puede superar los 30 caracteres')
+    .optional(),
+  email: z
+    .string()
+    .email('Ingrese un email válido')
+    .optional()
+    .or(z.literal('')),
+  address: z
+    .string()
+    .max(255, 'La dirección no puede superar los 255 caracteres')
+    .optional(),
 });
 type CustomerForm = z.infer<typeof customerSchema>;
 
@@ -75,9 +92,6 @@ export function CustomersPage() {
       invalidate();
       closeForm();
     },
-    onError: () => {
-      toast('Error al guardar el cliente', 'danger');
-    },
   });
 
   const toggleActive = useMutation({
@@ -89,9 +103,6 @@ export function CustomersPage() {
       toast('Estado actualizado', 'success');
       invalidate();
       setToggleConfirmId(null);
-    },
-    onError: () => {
-      toast('Error al cambiar el estado', 'danger');
     },
   });
 
@@ -206,6 +217,7 @@ export function CustomersPage() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        disabled={toggleActive.isPending}
                         onClick={() => {
                           if (customer.isActive) {
                             setToggleAction('deactivate');
@@ -230,16 +242,13 @@ export function CustomersPage() {
                   )}
                 </tr>
               ))}
-              {customersQuery.data?.data.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={canManage ? 6 : 5}
-                    className="px-4 py-8 text-center text-muted"
-                  >
-                    No hay clientes registrados.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={canManage ? 6 : 5}
+                isLoading={customersQuery.isPending}
+                isError={customersQuery.isError}
+                isEmpty={customersQuery.data?.data.length === 0}
+                emptyMessage="No hay clientes registrados."
+              />
             </tbody>
           </table>
           {customersQuery.data?.meta && (
@@ -272,32 +281,67 @@ export function CustomersPage() {
             </p>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
-            <Input id="name" error={!!errors.name} {...register('name')} />
+            <Label htmlFor="name" required>
+              Nombre
+            </Label>
+            <Input
+              id="name"
+              placeholder="Ej. Juan Pérez"
+              error={!!errors.name}
+              {...register('name')}
+            />
             <FieldError message={errors.name?.message} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="documentId">RUC / Cédula</Label>
-              <Input id="documentId" {...register('documentId')} />
+              <Input
+                id="documentId"
+                placeholder="Ej. 001-010190-0001A"
+                error={!!errors.documentId}
+                {...register('documentId')}
+              />
+              <FieldError message={errors.documentId?.message} />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="phone">Teléfono</Label>
-              <Input id="phone" {...register('phone')} />
+              <Input
+                id="phone"
+                placeholder="Ej. 8888 8888"
+                error={!!errors.phone}
+                {...register('phone')}
+              />
+              <FieldError message={errors.phone?.message} />
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" error={!!errors.email} {...register('email')} />
+            <Input
+              id="email"
+              type="email"
+              placeholder="Ej. cliente@correo.com"
+              error={!!errors.email}
+              {...register('email')}
+            />
             <FieldError message={errors.email?.message} />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="address">Dirección</Label>
-            <Input id="address" {...register('address')} />
+            <Input
+              id="address"
+              placeholder="Ej. Managua, km 5 carretera sur"
+              error={!!errors.address}
+              {...register('address')}
+            />
+            <FieldError message={errors.address?.message} />
           </div>
           <div className="flex gap-3">
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Guardando…' : 'Guardar'}
+              {save.isPending
+                ? 'Guardando…'
+                : editing
+                  ? 'Guardar cambios'
+                  : 'Crear cliente'}
             </Button>
             <Button type="button" variant="secondary" onClick={closeForm}>
               Cancelar

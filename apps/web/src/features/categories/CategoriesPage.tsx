@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { TableState } from '@/components/TableState';
 import { Modal } from '@/components/ui/modal';
 import { FieldError } from '@/components/FieldError';
 import { PaginationControls } from '@/components/PaginationControls';
@@ -26,8 +27,14 @@ interface Category {
 }
 
 const categorySchema = z.object({
-  name: z.string().min(1, 'Nombre requerido').max(80),
-  description: z.string().max(255).optional(),
+  name: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(80, 'El nombre no puede superar los 80 caracteres'),
+  description: z
+    .string()
+    .max(255, 'La descripción no puede superar los 255 caracteres')
+    .optional(),
 });
 type CategoryForm = z.infer<typeof categorySchema>;
 
@@ -65,9 +72,6 @@ export function CategoriesPage() {
       invalidate();
       closeForm();
     },
-    onError: () => {
-      toast('Error al guardar la categoría', 'danger');
-    },
   });
 
   const remove = useMutation({
@@ -77,9 +81,6 @@ export function CategoriesPage() {
       invalidate();
       setDeleteConfirmId(null);
       setDeleteConfirmText('');
-    },
-    onError: () => {
-      toast('Error al eliminar la categoría', 'danger');
     },
   });
 
@@ -173,6 +174,11 @@ export function CategoriesPage() {
                           setDeleteConfirmText('');
                         }}
                         disabled={category._count.products > 0}
+                        title={
+                          category._count.products > 0
+                            ? 'No se puede eliminar: tiene productos asociados'
+                            : undefined
+                        }
                         aria-label={`Eliminar ${category.name}`}
                       >
                         <Trash2 size={16} strokeWidth={1.5} />
@@ -181,16 +187,13 @@ export function CategoriesPage() {
                   )}
                 </tr>
               ))}
-              {categoriesQuery.data?.data.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={isAdmin ? 4 : 3}
-                    className="px-4 py-8 text-center text-muted"
-                  >
-                    No hay categorías registradas.
-                  </td>
-                </tr>
-              )}
+              <TableState
+                colSpan={isAdmin ? 4 : 3}
+                isLoading={categoriesQuery.isPending}
+                isError={categoriesQuery.isError}
+                isEmpty={categoriesQuery.data?.data.length === 0}
+                emptyMessage="No hay categorías registradas."
+              />
             </tbody>
           </table>
           {categoriesQuery.data?.meta && (
@@ -223,14 +226,22 @@ export function CategoriesPage() {
             </p>
           )}
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
-            <Input id="name" error={!!errors.name} {...register('name')} />
+            <Label htmlFor="name" required>
+              Nombre
+            </Label>
+            <Input
+              id="name"
+              placeholder="Ej. Whisky"
+              error={!!errors.name}
+              {...register('name')}
+            />
             <FieldError message={errors.name?.message} />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="description">Descripción</Label>
             <Input
               id="description"
+              placeholder="Ej. Destilados de malta y grano"
               error={!!errors.description}
               {...register('description')}
             />
@@ -238,7 +249,11 @@ export function CategoriesPage() {
           </div>
           <div className="flex gap-3">
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Guardando…' : 'Guardar'}
+              {save.isPending
+                ? 'Guardando…'
+                : editing
+                  ? 'Guardar cambios'
+                  : 'Crear categoría'}
             </Button>
             <Button type="button" variant="secondary" onClick={closeForm}>
               Cancelar

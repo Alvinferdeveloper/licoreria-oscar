@@ -7,7 +7,7 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          copper: 'var(--brand-copper)',
+          copper: 'rgb(var(--brand-copper-rgb) / <alpha-value>)',
           'copper-strong': 'var(--brand-copper-strong)',
           amber: 'var(--brand-amber)',
           cava: 'var(--brand-cava)',
@@ -16,16 +16,18 @@ module.exports = {
         surface: {
           base: 'var(--surface-base)',
           card: 'var(--surface-card)',
-          sunken: 'var(--surface-sunken)',
+          sunken: 'rgb(var(--surface-sunken-rgb) / <alpha-value>)',
         },
         border: 'var(--border-hairline)',
         ink: 'var(--text-ink)',
-        muted: 'var(--text-muted)',
+        muted: 'rgb(var(--text-muted-rgb) / <alpha-value>)',
+        'on-cava': 'var(--text-on-cava)',
+        'on-cava-muted': 'var(--text-on-cava-muted)',
         status: {
-          success: 'var(--status-success)',
-          danger: 'var(--status-danger)',
-          warning: 'var(--status-warning)',
-          info: 'var(--status-info)',
+          success: 'rgb(var(--status-success-rgb) / <alpha-value>)',
+          danger: 'rgb(var(--status-danger-rgb) / <alpha-value>)',
+          warning: 'rgb(var(--status-warning-rgb) / <alpha-value>)',
+          info: 'rgb(var(--status-info-rgb) / <alpha-value>)',
         },
       },
       fontFamily: {
@@ -40,6 +42,7 @@ module.exports = {
         h2: ['18px', { lineHeight: '1.3' }],
         body: ['14px', { lineHeight: '1.5' }],
         small: ['12px', { lineHeight: '1.4' }],
+        'mono-base': ['14px', { lineHeight: '1.4' }],
       },
       borderRadius: {
         sm: '4px',

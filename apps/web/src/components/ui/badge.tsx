@@ -8,10 +8,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        success: 'bg-status-success/10 text-status-success',
-        danger: 'bg-status-danger/10 text-status-danger',
-        warning: 'bg-status-warning/10 text-status-warning',
-        info: 'bg-status-info/10 text-status-info',
+        success: 'bg-status-success/[12%] text-status-success',
+        danger: 'bg-status-danger/[12%] text-status-danger',
+        warning: 'bg-status-warning/[12%] text-status-warning',
+        info: 'bg-status-info/[12%] text-status-info',
         neutral: 'bg-surface-sunken text-muted',
       },
     },
