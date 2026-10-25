@@ -385,16 +385,23 @@ export function PurchasesPage() {
 
           <div className="flex flex-col gap-2">
             <Label>Líneas de compra</Label>
-            <span className="text-small text-muted">
-              Costo unitario en córdobas ({CURRENCY_SYMBOL}).
-            </span>
+            <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_6.5rem_2.5rem] gap-2">
+              <span className="text-small font-medium text-muted">Producto</span>
+              <span className="text-small font-medium text-muted">Cantidad</span>
+              <span className="text-small font-medium text-muted">
+                Costo unit. ({CURRENCY_SYMBOL})
+              </span>
+            </div>
             {lines.map((line, index) => (
-              <div key={index} className="flex items-end gap-2">
+              <div
+                key={index}
+                className="grid grid-cols-[minmax(0,1fr)_5.5rem_6.5rem_2.5rem] items-end gap-2"
+              >
                 <Select
                   value={line.productId}
                   onChange={(e) => updateLine(index, { productId: e.target.value })}
                   aria-label={`Producto de la línea ${index + 1}`}
-                  className="h-10 flex-1 rounded-sm border border-border bg-surface-card px-3 text-body"
+                  className="h-10 rounded-sm border border-border bg-surface-card px-3 text-body"
                 >
                   <option value="">Producto…</option>
                   {(productsQuery.data ?? []).map((p) => (
@@ -411,8 +418,7 @@ export function PurchasesPage() {
                   onChange={(e) =>
                     updateLine(index, { quantity: Number(e.target.value) })
                   }
-                  aria-label="Cantidad"
-                  className="w-24"
+                  aria-label={`Cantidad de la línea ${index + 1}`}
                 />
                 <Input
                   type="number"
@@ -422,8 +428,7 @@ export function PurchasesPage() {
                   onChange={(e) =>
                     updateLine(index, { unitCost: Number(e.target.value) })
                   }
-                  aria-label="Costo unitario"
-                  className="w-28"
+                  aria-label={`Costo unitario de la línea ${index + 1}`}
                 />
                 <Button
                   type="button"
