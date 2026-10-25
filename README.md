@@ -16,7 +16,7 @@ docker-compose.yml     # Postgres para desarrollo local
 ## Requisitos
 
 - Node.js >= 20
-- Docker (para PostgreSQL local)
+- Podman (con WSL2 en Windows) o Docker, para PostgreSQL local
 
 ## Setup de desarrollo
 
@@ -38,9 +38,12 @@ npm run db:seed
 # 5. Compilar tipos compartidos
 npm run build:shared
 
-# 6. Correr backend y frontend (en terminales separadas)
-npm run dev:api    # http://localhost:3000/api/v1 — Swagger en /api/docs
-npm run dev:web    # http://localhost:5173
+# 6. Correr todo en modo dev (levanta la DB si hace falta, API y web juntos)
+npm run dev        # API: http://localhost:3000/api/v1 (Swagger /api/docs) — Web: http://localhost:5173
+
+# Alternativa en terminales separadas
+npm run dev:api
+npm run dev:web
 ```
 
 Credenciales iniciales del seed (configurables en `apps/api/.env`):
@@ -57,7 +60,9 @@ El seed también carga datos de demo (categorías, productos, proveedores, clien
 
 | Comando | Descripción |
 |---|---|
-| `npm run db:up` / `db:down` | Levantar/detener Postgres |
+| `npm run db:up` / `db:down` | Levantar/detener Postgres (auto-detecta Docker o Podman; crea la VM/contenedor si faltan) |
+| `npm run db:status` / `db:logs` | Estado y logs del contenedor Postgres |
+| `npm run docker:db:up` / `docker:db:down` | Alternativa con Docker Compose |
 | `npm run db:migrate` | Migraciones Prisma (dev) |
 | `npm run db:seed` | Seed de roles/permisos/admin |
 | `npm run db:studio` | Prisma Studio |

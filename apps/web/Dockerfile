@@ -1,5 +1,5 @@
 # Build del frontend React (Vite) servido con nginx
-FROM node:20-alpine AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json* ./

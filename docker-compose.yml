@@ -1,3 +1,5 @@
+name: licoreria
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -18,26 +20,33 @@ services:
       timeout: 5s
       retries: 10
 
-  # api y web solo se levantan con el perfil "full":
-  #   docker compose --profile full up -d --build
-  # Durante el desarrollo se corren local con `npm run dev:api` / `npm run dev:web`.
   api:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    image: licoreria-api:local
     container_name: licoreria-api
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-licoreria}:${POSTGRES_PASSWORD:-licoreria_dev}@postgres:5432/${POSTGRES_DB:-licoreria_db}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-docker-dev-access-secret}
+      JWT_ACCESS_EXPIRES: ${JWT_ACCESS_EXPIRES:-15m}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-docker-dev-refresh-secret}
+      JWT_REFRESH_EXPIRES: ${JWT_REFRESH_EXPIRES:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       BACKUP_DIR: /app/backups
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-product-images}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@licoreria.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin123*}
+      SEED_VENDEDOR_PASSWORD: ${SEED_VENDEDOR_PASSWORD:-Vendedor123*}
+      SEED_CONSULTA_PASSWORD: ${SEED_CONSULTA_PASSWORD:-Consulta123*}
       TZ: UTC
     volumes:
       - backups_data:/app/backups
@@ -49,19 +58,20 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://localhost:3000/api/docs-json').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+          "fetch('http://localhost:3000/api/docs-json').then((r) => r.text()).then((t) => process.exit(t.includes('openapi') ? 0 : 1)).catch(() => process.exit(1))",
         ]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 30s
-    profiles: ["full"]
+      retries: 12
+      start_period: 90s
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    image: licoreria-web:local
     container_name: licoreria-web
+    restart: unless-stopped
     depends_on:
       api:
         condition: service_healthy
@@ -72,7 +82,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    profiles: ["full"]
 
 volumes:
   postgres_data:

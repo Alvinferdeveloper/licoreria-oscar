@@ -2,25 +2,39 @@
   "name": "licoreria-app",
   "version": "0.1.0",
   "private": true,
-  "description": "Sistema de Control de Inventario y Facturación de Licorería",
+  "description": "Sistema de Control de Inventario y FacturaciÃ³n de LicorerÃ­a",
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
+    "predev": "npm run db:up",
+    "dev": "concurrently -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run start:dev --workspace apps/api",
     "dev:web": "npm run dev --workspace apps/web",
     "build": "npm run build --workspaces --if-present",
     "build:shared": "npm run build --workspace packages/shared-types",
-    "db:up": "docker compose up -d postgres",
-    "db:down": "docker compose down",
-    "stack:up": "docker compose --profile full up -d --build",
-    "stack:down": "docker compose --profile full down",
+    "start": "node scripts/stack.mjs up",
+    "stack:up": "node scripts/stack.mjs up",
+    "stack:down": "node scripts/stack.mjs down",
+    "stack:restart": "node scripts/stack.mjs restart",
+    "stack:ps": "node scripts/stack.mjs ps",
+    "stack:logs": "node scripts/stack.mjs logs",
+    "db:up": "node scripts/db.mjs up",
+    "db:down": "node scripts/db.mjs down",
+    "db:status": "node scripts/db.mjs status",
+    "db:logs": "node scripts/db.mjs logs",
+    "docker:db:up": "docker compose up -d postgres",
+    "docker:db:down": "docker compose stop postgres",
     "db:migrate": "npm run prisma:migrate --workspace apps/api",
     "db:seed": "npm run prisma:seed --workspace apps/api",
     "db:studio": "npm run prisma:studio --workspace apps/api"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
   }
 }
+
